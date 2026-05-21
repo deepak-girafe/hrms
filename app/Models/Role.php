@@ -14,4 +14,13 @@ class Role extends Model
         'status'
 
     ];
+    public function menus()
+    {
+        return $this->belongsToMany(
+
+            Menu::class,
+            'role_menu_permissions'
+
+        );
+    }
 }

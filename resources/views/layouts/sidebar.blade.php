@@ -390,6 +390,72 @@ $userMenus = $user->role
     </li>
 
     @endif
+
+    @if(auth()->check())
+
+    @if(strtolower(auth()->user()->role->name) != 'admin')
+
+        <li class="nav-item">
+
+            <a href="{{ route('daily-eod.index') }}"
+               class="nav-link">
+
+                <i class="bi bi-journal-check"></i>
+
+                <span>
+
+                    Daily EOD
+
+                </span>
+
+            </a>
+
+        </li>
+
+    @endif
+
+    @if(
+
+        strtolower(auth()->user()->role->name) == 'admin'
+
+        ||
+
+        in_array(
+
+            strtolower(auth()->user()->role->name),
+
+            [
+
+                'manager',
+                'team lead',
+                'department head'
+
+            ]
+
+        )
+
+    )
+
+        <li class="nav-item">
+
+            <a href="{{ route('daily-eod.index') }}"
+               class="nav-link">
+
+                <i class="bi bi-clipboard-data"></i>
+
+                <span>
+
+                    Team EOD Reports
+
+                </span>
+
+            </a>
+
+        </li>
+
+    @endif
+
+@endif
     </ul>
 
 </div>

@@ -100,4 +100,35 @@ class User extends Authenticatable
             LeaveApplication::class
         );
     }
+    /*
+    |--------------------------------------------------------------------------
+    | Daily EODs
+    |--------------------------------------------------------------------------
+    */
+
+    public function dailyEods()
+    {
+        return $this->hasMany(DailyEod::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subordinates
+    |--------------------------------------------------------------------------
+    */
+
+    public function subordinates()
+    {
+        return $this->belongsToMany(
+
+            User::class,
+
+            'user_reporting',
+
+            'reporting_user_id',
+
+            'user_id'
+
+        );
+    }
 }

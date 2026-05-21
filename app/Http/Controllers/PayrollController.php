@@ -14,22 +14,17 @@ use Maatwebsite\Excel\Facades\Excel;
 class PayrollController extends Controller
 {
     /**
-     * Payroll List
+     * Payroll Listing
      */
     public function index()
     {
         $payrolls = Payroll::with('user')
-
             ->latest()
-
             ->paginate(10);
 
         return view(
-
             'payrolls.index',
-
             compact('payrolls')
-
         );
     }
 
@@ -77,17 +72,11 @@ class PayrollController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Loop Employees
+        | Loop Users
         |--------------------------------------------------------------------------
         */
 
         foreach($users as $user) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | Salary Structure
-            |--------------------------------------------------------------------------
-            */
 
             $salary = $user->salaryStructure;
 
@@ -98,60 +87,95 @@ class PayrollController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Total Month Days
+            | Month Dates
             |--------------------------------------------------------------------------
             */
 
-            $totalMonthDays = Carbon::create(
+            $startDate = Carbon::create(
 
                 $request->year,
                 $request->month,
                 1
 
-            )->daysInMonth;
+            );
+
+            $endDate = $startDate
+                ->copy()
+                ->endOfMonth();
 
             /*
             |--------------------------------------------------------------------------
-            | Attendance Records
+            | Month Days
             |--------------------------------------------------------------------------
             */
 
-            $attendanceRecords = Attendance::where(
-
-                'user_id',
-                $user->id
-
-            )
-
-            ->whereMonth(
-                'attendance_date',
-                $request->month
-            )
-
-            ->whereYear(
-                'attendance_date',
-                $request->year
-            )
-
-            ->get();
+            $totalMonthDays = $startDate->daysInMonth;
 
             /*
             |--------------------------------------------------------------------------
-            | Attendance Calculations
+            | Attendance Summary
             |--------------------------------------------------------------------------
             */
 
-            $presentDays = 0;
+            $presentDays = 0.0;
 
-            $halfDays = 0;
+            $deductibleDays = 0.0;
 
-            $unpaidLeaves = 0;
+            $unpaidLeaves = 0.0;
 
-            foreach($attendanceRecords as $attendance) {
+            /*
+            |--------------------------------------------------------------------------
+            | Loop Entire Month
+            |--------------------------------------------------------------------------
+            */
+
+            $currentDate = $startDate->copy();
+
+            while($currentDate <= $endDate) {
 
                 /*
                 |--------------------------------------------------------------------------
-                | Punch In / Out Required
+                | Find Attendance
+                |--------------------------------------------------------------------------
+                */
+
+                $attendance = Attendance::where(
+
+                    'user_id',
+                    $user->id
+
+                )
+
+                ->whereDate(
+
+                    'attendance_date',
+
+                    $currentDate->format('Y-m-d')
+
+                )
+
+                ->first();
+
+                /*
+                |--------------------------------------------------------------------------
+                | No Attendance
+                |--------------------------------------------------------------------------
+                */
+
+                if(!$attendance) {
+
+                    $deductibleDays += 1;
+
+                    $unpaidLeaves += 1;
+
+                    $currentDate->addDay();
+
+                    continue;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Missing Punch
                 |--------------------------------------------------------------------------
                 */
 
@@ -165,7 +189,11 @@ class PayrollController extends Controller
 
                 ) {
 
-                    $unpaidLeaves++;
+                    $deductibleDays += 1;
+
+                    $unpaidLeaves += 1;
+
+                    $currentDate->addDay();
 
                     continue;
                 }
@@ -217,19 +245,15 @@ class PayrollController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | Attendance Rules
-                |--------------------------------------------------------------------------
-                */
-
-                /*
-                |--------------------------------------------------------------------------
                 | Less Than 4.5 Hours
                 |--------------------------------------------------------------------------
                 */
 
                 if($workingHours < 4.5) {
 
-                    $unpaidLeaves++;
+                    $deductibleDays += 1;
+
+                    $unpaidLeaves += 1;
                 }
 
                 /*
@@ -248,7 +272,9 @@ class PayrollController extends Controller
 
                 ) {
 
-                    $halfDays += 1;
+                    $deductibleDays += 0.5;
+
+                    $presentDays += 0.5;
                 }
 
                 /*
@@ -261,19 +287,9 @@ class PayrollController extends Controller
 
                     $presentDays += 1;
                 }
+
+                $currentDate->addDay();
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Deductible Days
-            |--------------------------------------------------------------------------
-            */
-
-            $deductibleDays =
-
-                $unpaidLeaves +
-
-                ($halfDays * 0.5);
 
             /*
             |--------------------------------------------------------------------------
@@ -355,17 +371,15 @@ class PayrollController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $netSalary =
+            $netSalary = max(
 
-                max(
+                0,
 
-                    0,
+                $grossSalary -
 
-                    $grossSalary -
+                $totalDeduction
 
-                    $totalDeduction
-
-                );
+            );
 
             /*
             |--------------------------------------------------------------------------
@@ -386,12 +400,6 @@ class PayrollController extends Controller
                 ],
 
                 [
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Month
-                    |--------------------------------------------------------------------------
-                    */
 
                     'salary_month' =>
 
@@ -420,9 +428,6 @@ class PayrollController extends Controller
 
                     'present_days' =>
                         $presentDays,
-
-                    'half_days' =>
-                        $halfDays,
 
                     'leave_days' =>
                         $unpaidLeaves,
@@ -520,7 +525,7 @@ class PayrollController extends Controller
     }
 
     /**
-     * Mark Salary Paid
+     * Mark Paid
      */
     public function markPaid($id)
     {
@@ -542,7 +547,7 @@ class PayrollController extends Controller
     }
 
     /**
-     * Download Payslip
+     * Payslip PDF
      */
     public function payslip($id)
     {
@@ -560,9 +565,7 @@ class PayrollController extends Controller
         return $pdf->download(
 
             'Payslip-' .
-
             $payroll->user->name .
-
             '.pdf'
 
         );

@@ -14,6 +14,8 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\LeaveApplicationController;
+use App\Http\Controllers\DailyEodController;
+
 Route::redirect('/', '/login');
 
 Route::middleware(['auth'])->group(function () {
@@ -151,6 +153,22 @@ Route::middleware(['auth'])->group(function () {
         [LeaveApplicationController::class, 'reject']
     
     )->name('leave-approvals.reject');
+
+    Route::resource(
+
+        'daily-eod',
+    
+        DailyEodController::class
+    
+    );
+    
+    Route::post(
+    
+        '/daily-eod/{id}/review',
+    
+        [DailyEodController::class, 'review']
+    
+    )->name('daily-eod.review');
 });
 
 

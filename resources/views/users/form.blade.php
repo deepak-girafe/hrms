@@ -3,122 +3,316 @@
 
 <style>
 
-.step-card {
-
-    display: none;
-
+body{
+    background:#f4f7fb;
 }
 
-.step-card.active {
+.form-wizard-card{
 
-    display: block;
-
+    border:none;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 35px rgba(0,0,0,0.08);
 }
 
-.select2-container .select2-selection--multiple {
+.form-header{
 
-    min-height: 38px;
+    background:linear-gradient(
+        135deg,
+        #0d6efd,
+        #0b5ed7
+    );
 
+    color:#fff;
+    padding:30px;
+}
+
+.form-header h3{
+
+    font-weight:700;
+    margin-bottom:5px;
+}
+
+.form-header p{
+
+    margin-bottom:0;
+    opacity:.9;
+}
+
+.step-indicator{
+
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:35px;
+    position:relative;
+}
+
+.step-indicator::before{
+
+    content:'';
+    position:absolute;
+    top:22px;
+    left:0;
+    width:100%;
+    height:4px;
+    background:#e9ecef;
+    z-index:1;
+}
+
+.step-item{
+
+    position:relative;
+    z-index:2;
+    text-align:center;
+    width:100%;
+}
+
+.step-circle{
+
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    background:#dee2e6;
+    color:#6c757d;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:auto;
+    font-weight:700;
+    transition:.3s;
+}
+
+.step-item.active .step-circle{
+
+    background:#0d6efd;
+    color:#fff;
+    box-shadow:0 5px 15px rgba(13,110,253,.3);
+}
+
+.step-title{
+
+    margin-top:10px;
+    font-size:13px;
+    font-weight:600;
+    color:#6c757d;
+}
+
+.step-item.active .step-title{
+
+    color:#0d6efd;
+}
+
+.step-card{
+
+    display:none;
+    animation:fadeIn .3s ease;
+}
+
+.step-card.active{
+
+    display:block;
+}
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.form-section{
+
+    background:#fff;
+    border-radius:18px;
+    padding:25px;
+    border:1px solid #eef1f6;
+}
+
+.form-section-title{
+
+    font-size:18px;
+    font-weight:700;
+    margin-bottom:25px;
+    color:#212529;
+}
+
+.form-label{
+
+    font-weight:600;
+    margin-bottom:8px;
+    color:#495057;
+}
+
+.form-control,
+.form-select{
+
+    border-radius:12px;
+    min-height:48px;
+    border:1px solid #dbe2ea;
+    box-shadow:none !important;
+}
+
+.form-control:focus,
+.form-select:focus{
+
+    border-color:#0d6efd;
+}
+
+.select2-container--default .select2-selection--multiple{
+
+    border-radius:12px !important;
+    border:1px solid #dbe2ea !important;
+    min-height:48px !important;
+    padding:5px;
+}
+
+.select2-container--default.select2-container--focus
+.select2-selection--multiple{
+
+    border-color:#0d6efd !important;
+}
+
+.step-actions{
+
+    border-top:1px solid #eef1f6;
+    padding-top:25px;
+}
+
+.btn-custom{
+
+    min-width:140px;
+    min-height:48px;
+    border-radius:14px;
+    font-weight:600;
+}
+
+.salary-card{
+
+    background:#f8fbff;
+    border:1px solid #e1ecff;
+    border-radius:16px;
+    padding:20px;
+}
+
+.is-invalid{
+
+    border-color:#dc3545 !important;
 }
 
 </style>
 
-<div class="card border-0 shadow-sm rounded-4">
+<div class="container-fluid py-4">
 
-    <div class="card-header bg-white">
+    <div class="card form-wizard-card">
 
-        <h5 class="mb-0 fw-bold">
+        <div class="form-header">
 
-            {{ isset($user) ? 'Edit User' : 'Add User' }}
+            <div class="d-flex justify-content-between align-items-center">
 
-        </h5>
+                <div>
 
-    </div>
+                    <h3>
 
-    <div class="card-body">
+                        {{ isset($user)
+                            ? 'Edit Employee'
+                            : 'Create Employee' }}
 
-        <form method="POST"
-              id="multiStepForm"
-              action="{{ isset($user)
-                    ? route('users.update', $user->id)
-                    : route('users.store') }}">
+                    </h3>
 
-            @csrf
+                    <p>
 
-            @if(isset($user))
-                @method('PUT')
-            @endif
+                        Manage employee details, salary and organization setup
 
-            <!-- STEP 1 -->
+                    </p>
 
-            <div class="step-card active"
-                 data-step="1">
+                </div>
 
-                <h5 class="fw-bold mb-4">
+                <div>
 
-                    Basic Information
+                    <i class="bi bi-person-workspace"
+                       style="font-size:55px;"></i>
 
-                </h5>
+                </div>
 
-                <div class="row">
+            </div>
 
-                    <div class="col-md-6 mb-3">
+        </div>
 
-                        <label class="form-label">
+        <div class="card-body p-4 p-lg-5">
 
-                            Full Name
+            {{-- STEP INDICATOR --}}
 
-                        </label>
+            <div class="step-indicator">
 
-                        <input type="text"
-                               name="name"
-                               value="{{ old('name', $user->name ?? '') }}"
-                               class="form-control required-field">
+                <div class="step-item active"
+                     data-indicator="1">
+
+                    <div class="step-circle">
+
+                        1
 
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="step-title">
 
-                        <label class="form-label">
-
-                            Email
-
-                        </label>
-
-                        <input type="email"
-                               name="email"
-                               value="{{ old('email', $user->email ?? '') }}"
-                               class="form-control required-field">
+                        Basic
 
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                </div>
 
-                        <label class="form-label">
+                <div class="step-item"
+                     data-indicator="2">
 
-                            Mobile Number
+                    <div class="step-circle">
 
-                        </label>
-
-                        <input type="text"
-                               name="mobile_number"
-                               value="{{ old('mobile_number', $user->mobile_number ?? '') }}"
-                               class="form-control required-field">
+                        2
 
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="step-title">
 
-                        <label class="form-label">
+                        Organization
 
-                            Joining Date
+                    </div>
 
-                        </label>
+                </div>
 
-                        <input type="date"
-                               name="joining_date"
-                               value="{{ old('joining_date', $user->joining_date ?? '') }}"
-                               class="form-control required-field">
+                <div class="step-item"
+                     data-indicator="3">
+
+                    <div class="step-circle">
+
+                        3
+
+                    </div>
+
+                    <div class="step-title">
+
+                        Salary
+
+                    </div>
+
+                </div>
+
+                <div class="step-item"
+                     data-indicator="4">
+
+                    <div class="step-circle">
+
+                        4
+
+                    </div>
+
+                    <div class="step-title">
+
+                        Deductions
 
                     </div>
 
@@ -126,369 +320,544 @@
 
             </div>
 
-            <!-- STEP 2 -->
+            <form method="POST"
+                  id="multiStepForm"
+                  action="{{ isset($user)
+                        ? route('users.update', $user->id)
+                        : route('users.store') }}">
 
-            <div class="step-card"
-                 data-step="2">
+                @csrf
 
-                <h5 class="fw-bold mb-4">
+                @if(isset($user))
+                    @method('PUT')
+                @endif
 
-                    Role & Department
+                {{-- STEP 1 --}}
 
-                </h5>
+                <div class="step-card active"
+                     data-step="1">
 
-                <div class="row">
+                    <div class="form-section">
 
-                    <div class="col-md-6 mb-3">
+                        <h5 class="form-section-title">
 
-                        <label class="form-label">
+                            Basic Information
 
-                            Role
+                        </h5>
 
-                        </label>
+                        <div class="row">
 
-                        <select name="role_id"
-                                id="roleDropdown"
-                                class="form-select required-field">
+                            <div class="col-md-4 mb-4">
 
-                            <option value="">
-                                Select Role
-                            </option>
+                                <label class="form-label">
 
-                            @foreach($roles as $role)
+                                    Employee Code
 
-                                <option value="{{ $role->id }}"
-                                        data-reporting="{{ $role->reporting_required }}"
-                                    {{ old('role_id', $user->role_id ?? '') == $role->id ? 'selected' : '' }}>
+                                </label>
 
-                                    {{ $role->name }}
+                                <input type="text"
+                                       name="employee_code"
+                                       value="{{ old('employee_code', $user->employee_code ?? '') }}"
+                                       class="form-control required-field"
+                                       placeholder="EMP-1001">
 
-                                </option>
+                            </div>
 
-                            @endforeach
+                            <div class="col-md-4 mb-4">
 
-                        </select>
+                                <label class="form-label">
 
-                    </div>
+                                    Full Name
 
-                    <div class="col-md-6 mb-3">
+                                </label>
 
-                        <label class="form-label">
+                                <input type="text"
+                                       name="name"
+                                       value="{{ old('name', $user->name ?? '') }}"
+                                       class="form-control required-field">
 
-                            Designation
+                            </div>
 
-                        </label>
+                            <div class="col-md-4 mb-4">
 
-                        <input type="text"
-                               name="designation"
-                               value="{{ old('designation', $user->designation ?? '') }}"
-                               class="form-control required-field">
+                                <label class="form-label">
 
-                    </div>
+                                    Email
 
-                    <div class="col-md-6 mb-3">
+                                </label>
 
-                        <label class="form-label">
+                                <input type="email"
+                                       name="email"
+                                       value="{{ old('email', $user->email ?? '') }}"
+                                       class="form-control required-field">
 
-                            Departments
+                            </div>
 
-                        </label>
+                            <div class="col-md-4 mb-4">
 
-                        <select name="departments[]"
-                                class="form-select select2 required-field"
-                                multiple>
+                                <label class="form-label">
 
-                            @foreach($departments as $department)
+                                    Mobile Number
 
-                                <option value="{{ $department->id }}"
+                                </label>
 
-                                    @if(isset($user) &&
-                                        $user->departments
-                                            ->pluck('id')
-                                            ->contains($department->id))
-                                        selected
-                                    @endif>
+                                <input type="text"
+                                       name="mobile_number"
+                                       value="{{ old('mobile_number', $user->mobile_number ?? '') }}"
+                                       class="form-control required-field">
 
-                                    {{ $department->name }}
+                            </div>
 
-                                </option>
+                            <div class="col-md-4 mb-4">
 
-                            @endforeach
+                                <label class="form-label">
 
-                        </select>
+                                    Joining Date
 
-                    </div>
+                                </label>
 
-                    <div class="col-md-6 mb-3"
-                         id="reportingToDiv"
-                         style="display:none;">
+                                <input type="date"
+                                       name="joining_date"
+                                       value="{{ old('joining_date', $user->joining_date ?? '') }}"
+                                       class="form-control required-field">
 
-                        <label class="form-label">
+                            </div>
 
-                            Reporting Managers
+                            <div class="col-md-4 mb-4">
 
-                        </label>
+                                <label class="form-label">
 
-                        <select name="reporting_to[]"
-                                class="form-select select2"
-                                multiple>
+                                    Probation Period (Months)
 
-                            @foreach($managers as $manager)
+                                </label>
 
-                                <option value="{{ $manager->id }}"
+                                <input type="number"
+                                       name="probation_period"
+                                       value="{{ old('probation_period', $user->probation_period ?? 6) }}"
+                                       class="form-control required-field">
 
-                                    @if(isset($user) &&
-                                        $user->reportingManagers
-                                            ->pluck('id')
-                                            ->contains($manager->id))
-                                        selected
-                                    @endif>
+                            </div>
 
-                                    {{ $manager->name }}
-
-                                </option>
-
-                            @endforeach
-
-                        </select>
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
+                {{-- STEP 2 --}}
 
-            <!-- STEP 3 -->
+                <div class="step-card"
+                     data-step="2">
 
-            <div class="step-card"
-                 data-step="3">
+                    <div class="form-section">
 
-                <h5 class="fw-bold mb-4">
+                        <h5 class="form-section-title">
 
-                    Salary Details
+                            Organization Structure
 
-                </h5>
+                        </h5>
 
-                <div class="row">
+                        <div class="row">
 
-                    <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-4">
 
-                        <label class="form-label">
+                                <label class="form-label">
 
-                            Basic Salary
+                                    Role
 
-                        </label>
+                                </label>
 
-                        <input type="number"
-                               step="0.01"
-                               name="basic_salary"
-                               class="form-control required-field">
+                                <select name="role_id"
+                                        id="roleDropdown"
+                                        class="form-select required-field">
 
-                    </div>
+                                    <option value="">
+                                        Select Role
+                                    </option>
 
-                    <div class="col-md-4 mb-3">
+                                    @foreach($roles as $role)
 
-                        <label class="form-label">
+                                        <option value="{{ $role->id }}"
+                                                data-reporting="{{ $role->reporting_required }}"
+                                            {{ old('role_id', $user->role_id ?? '') == $role->id ? 'selected' : '' }}>
 
-                            HRA
+                                            {{ $role->name }}
 
-                        </label>
+                                        </option>
 
-                        <input type="number"
-                               step="0.01"
-                               name="hra"
-                               class="form-control required-field">
+                                    @endforeach
 
-                    </div>
+                                </select>
 
-                    <div class="col-md-4 mb-3">
+                            </div>
 
-                        <label class="form-label">
+                            <div class="col-md-6 mb-4">
 
-                            DA
+                                <label class="form-label">
 
-                        </label>
+                                    Designation
 
-                        <input type="number"
-                               step="0.01"
-                               name="da"
-                               class="form-control required-field">
+                                </label>
 
-                    </div>
+                                <input type="text"
+                                       name="designation"
+                                       value="{{ old('designation', $user->designation ?? '') }}"
+                                       class="form-control required-field">
 
-                    <div class="col-md-4 mb-3">
+                            </div>
 
-                        <label class="form-label">
+                            <div class="col-md-6 mb-4">
 
-                            TA
+                                <label class="form-label">
 
-                        </label>
+                                    Departments
 
-                        <input type="number"
-                               step="0.01"
-                               name="ta"
-                               class="form-control required-field">
+                                </label>
 
-                    </div>
+                                <select name="departments[]"
+                                        class="form-select select2 required-field"
+                                        multiple>
 
-                    <div class="col-md-4 mb-3">
+                                    @foreach($departments as $department)
 
-                        <label class="form-label">
+                                        <option value="{{ $department->id }}"
 
-                            Medical Allowance
+                                            @if(isset($user) &&
+                                                $user->departments
+                                                    ->pluck('id')
+                                                    ->contains($department->id))
+                                                selected
+                                            @endif>
 
-                        </label>
+                                            {{ $department->name }}
 
-                        <input type="number"
-                               step="0.01"
-                               name="medical_allowance"
-                               class="form-control required-field">
+                                        </option>
 
-                    </div>
+                                    @endforeach
 
-                    <div class="col-md-4 mb-3">
+                                </select>
 
-                        <label class="form-label">
+                            </div>
 
-                            Bonus
+                            <div class="col-md-6 mb-4"
+                                 id="reportingToDiv"
+                                 style="display:none;">
 
-                        </label>
+                                <label class="form-label">
 
-                        <input type="number"
-                               step="0.01"
-                               name="bonus"
-                               class="form-control required-field">
+                                    Reporting Managers
+
+                                </label>
+
+                                <select name="reporting_to[]"
+                                        class="form-select select2"
+                                        multiple>
+
+                                    @foreach($managers as $manager)
+
+                                        <option value="{{ $manager->id }}"
+
+                                            @if(isset($user) &&
+                                                $user->reportingManagers
+                                                    ->pluck('id')
+                                                    ->contains($manager->id))
+                                                selected
+                                            @endif>
+
+                                            {{ $manager->name }}
+
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
+                {{-- STEP 3 --}}
 
-            <!-- STEP 4 -->
+                <div class="step-card"
+                     data-step="3">
 
-            <div class="step-card"
-                 data-step="4">
+                    <div class="salary-card">
 
-                <h5 class="fw-bold mb-4">
+                        <h5 class="form-section-title">
 
-                    Deductions & Status
+                            Salary Structure
 
-                </h5>
+                        </h5>
 
-                <div class="row">
+                        <div class="row">
 
-                    <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-4">
 
-                        <label class="form-label">
+                                <label class="form-label">
 
-                            PF Deduction
+                                    Basic Salary
 
-                        </label>
+                                </label>
 
-                        <input type="number"
-                               step="0.01"
-                               name="pf_deduction"
-                               class="form-control required-field">
+                                <input type="number"
+                                       step="0.01"
+                                       name="basic_salary"
+                                       value="{{ old('basic_salary', $user->salaryStructure->basic_salary ?? '') }}"
+                                       class="form-control required-field">
 
-                    </div>
+                            </div>
 
-                    <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-4">
 
-                        <label class="form-label">
+                                <label class="form-label">
 
-                            ESI Deduction
+                                    HRA
 
-                        </label>
+                                </label>
 
-                        <input type="number"
-                               step="0.01"
-                               name="esi_deduction"
-                               class="form-control required-field">
+                                <input type="number"
+                                       step="0.01"
+                                       name="hra"
+                                       value="{{ old('hra', $user->salaryStructure->hra ?? '') }}"
+                                       class="form-control required-field">
 
-                    </div>
+                            </div>
 
-                    <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-4">
 
-                        <label class="form-label">
+                                <label class="form-label">
 
-                            TDS Deduction
+                                    DA
 
-                        </label>
+                                </label>
 
-                        <input type="number"
-                               step="0.01"
-                               name="tds_deduction"
-                               class="form-control required-field">
+                                <input type="number"
+                                       step="0.01"
+                                       name="da"
+                                       value="{{ old('da', $user->salaryStructure->da ?? '') }}"
+                                       class="form-control required-field">
 
-                    </div>
+                            </div>
 
-                    <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-4">
 
-                        <label class="form-label">
+                                <label class="form-label">
 
-                            Status
+                                    TA
 
-                        </label>
+                                </label>
 
-                        <select name="status"
-                                class="form-select required-field">
+                                <input type="number"
+                                       step="0.01"
+                                       name="ta"
+                                       value="{{ old('ta', $user->salaryStructure->ta ?? '') }}"
+                                       class="form-control required-field">
 
-                            <option value="">
-                                Select Status
-                            </option>
+                            </div>
 
-                            <option value="Active">
-                                Active
-                            </option>
+                            <div class="col-md-4 mb-4">
 
-                            <option value="Inactive">
-                                Inactive
-                            </option>
+                                <label class="form-label">
 
-                        </select>
+                                    Bonus
+
+                                </label>
+
+                                <input type="number"
+                                       step="0.01"
+                                       name="bonus"
+                                       value="{{ old('bonus', $user->salaryStructure->bonus ?? '') }}"
+                                       class="form-control required-field">
+
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <label class="form-label">
+
+                                    Incentive
+
+                                </label>
+
+                                <input type="number"
+                                       step="0.01"
+                                       name="special_allowance"
+                                       value="{{ old('special_allowance', $user->salaryStructure->special_allowance ?? '') }}"
+                                       class="form-control required-field">
+
+                            </div>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
+                {{-- STEP 4 --}}
 
-            <!-- BUTTONS -->
+                <div class="step-card"
+                     data-step="4">
 
-            <div class="d-flex justify-content-between mt-4">
+                    <div class="salary-card">
 
-                <button type="button"
-                        id="prevBtn"
-                        class="btn btn-secondary rounded-pill px-4"
-                        style="display:none;">
+                        <h5 class="form-section-title">
 
-                    Previous
+                            Deductions & Status
 
-                </button>
+                        </h5>
 
-                <button type="button"
-                        id="nextBtn"
-                        class="btn btn-primary rounded-pill px-4 ms-auto">
+                        <div class="row">
 
-                    Next
+                            <div class="col-md-3 mb-4">
 
-                </button>
+                                <label class="form-label">
 
-                <button type="submit"
-                        id="submitBtn"
-                        class="btn btn-success rounded-pill px-4"
-                        style="display:none;">
+                                    PF
 
-                    {{ isset($user)
-                        ? 'Update User'
-                        : 'Save User' }}
+                                </label>
 
-                </button>
+                                <input type="number"
+                                       step="0.01"
+                                       name="pf"
+                                       value="{{ old('pf', $user->salaryStructure->pf_deduction ?? '') }}"
+                                       class="form-control required-field">
 
-            </div>
+                            </div>
 
-        </form>
+                            <div class="col-md-3 mb-4">
+
+                                <label class="form-label">
+
+                                    ESI
+
+                                </label>
+
+                                <input type="number"
+                                       step="0.01"
+                                       name="esi"
+                                       value="{{ old('esi', $user->salaryStructure->esi_deduction ?? '') }}"
+                                       class="form-control required-field">
+
+                            </div>
+
+                            <div class="col-md-3 mb-4">
+
+                                <label class="form-label">
+
+                                    TDS
+
+                                </label>
+
+                                <input type="number"
+                                       step="0.01"
+                                       name="tds"
+                                       value="{{ old('tds', $user->salaryStructure->tds_deduction ?? '') }}"
+                                       class="form-control required-field">
+
+                            </div>
+
+                            <!-- <div class="col-md-3 mb-4">
+
+                                <label class="form-label">
+
+                                    Professional Tax
+
+                                </label>
+
+                                <input type="number"
+                                       step="0.01"
+                                       name="professional_tax"
+                                       value="{{ old('professional_tax', $user->salaryStructure->professional_tax ?? '') }}"
+                                       class="form-control required-field">
+
+                            </div> -->
+
+                            <div class="col-md-6 mb-4">
+
+                                <label class="form-label">
+
+                                    Status
+
+                                </label>
+
+                                <select name="status"
+                                        class="form-select required-field">
+
+                                    <option value="">
+                                        Select Status
+                                    </option>
+
+                                    <option value="Active"
+                                        {{ old('status', $user->status ?? '') == 'Active' ? 'selected' : '' }}>
+
+                                        Active
+
+                                    </option>
+
+                                    <option value="Inactive"
+                                        {{ old('status', $user->status ?? '') == 'Inactive' ? 'selected' : '' }}>
+
+                                        Inactive
+
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {{-- ACTIONS --}}
+
+                <div class="step-actions d-flex justify-content-between mt-4">
+
+                    <button type="button"
+                            id="prevBtn"
+                            class="btn btn-light btn-custom"
+                            style="display:none;">
+
+                        <i class="bi bi-arrow-left me-2"></i>
+
+                        Previous
+
+                    </button>
+
+                    <button type="button"
+                            id="nextBtn"
+                            class="btn btn-primary btn-custom ms-auto">
+
+                        Next
+
+                        <i class="bi bi-arrow-right ms-2"></i>
+
+                    </button>
+
+                    <button type="submit"
+                            id="submitBtn"
+                            class="btn btn-success btn-custom"
+                            style="display:none;">
+
+                        <i class="bi bi-check-circle me-2"></i>
+
+                        {{ isset($user)
+                            ? 'Update Employee'
+                            : 'Save Employee' }}
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
 
     </div>
 
@@ -504,7 +873,9 @@ $(document).ready(function () {
 
     $('.select2').select2({
 
-        width: '100%'
+        width:'100%',
+
+        placeholder:'Select Options'
 
     });
 
@@ -521,7 +892,12 @@ function showStep(step) {
     $('.step-card[data-step="' + step + '"]')
         .addClass('active');
 
-    if(step === 1) {
+    $('.step-item').removeClass('active');
+
+    $('.step-item[data-indicator="' + step + '"]')
+        .addClass('active');
+
+    if(step === 1){
 
         $('#prevBtn').hide();
 
@@ -531,7 +907,7 @@ function showStep(step) {
 
     }
 
-    if(step === totalSteps) {
+    if(step === totalSteps){
 
         $('#nextBtn').hide();
 
@@ -546,13 +922,13 @@ function showStep(step) {
     }
 }
 
-function validateStep(step) {
+function validateStep(step){
 
     let valid = true;
 
-    $('.step-card[data-step="' + step + '"] .required-field').each(function () {
+    $('.step-card[data-step="' + step + '"] .required-field').each(function(){
 
-        if($(this).val() === '' || $(this).val() === null) {
+        if($(this).val() == '' || $(this).val() == null){
 
             $(this).addClass('is-invalid');
 
@@ -561,32 +937,27 @@ function validateStep(step) {
         } else {
 
             $(this).removeClass('is-invalid');
-
         }
-
     });
 
     return valid;
 }
 
-$('#nextBtn').click(function () {
+$('#nextBtn').click(function(){
 
-    if(validateStep(currentStep)) {
+    if(validateStep(currentStep)){
 
         currentStep++;
 
         showStep(currentStep);
-
     }
-
 });
 
-$('#prevBtn').click(function () {
+$('#prevBtn').click(function(){
 
     currentStep--;
 
     showStep(currentStep);
-
 });
 
 showStep(currentStep);
@@ -597,27 +968,33 @@ const roleDropdown =
 const reportingDiv =
     document.getElementById('reportingToDiv');
 
-function toggleReporting() {
+function toggleReporting(){
 
     const selectedOption =
-        roleDropdown.options[roleDropdown.selectedIndex];
+        roleDropdown.options[
+            roleDropdown.selectedIndex
+        ];
 
     const reportingRequired =
-        selectedOption.getAttribute('data-reporting');
+        selectedOption.getAttribute(
+            'data-reporting'
+        );
 
-    if(reportingRequired === 'Yes') {
+    if(reportingRequired === 'Yes'){
 
         reportingDiv.style.display = 'block';
 
     } else {
 
         reportingDiv.style.display = 'none';
-
     }
 }
 
 toggleReporting();
 
-roleDropdown.addEventListener('change', toggleReporting);
+roleDropdown.addEventListener(
+    'change',
+    toggleReporting
+);
 
 </script>

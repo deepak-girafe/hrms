@@ -27,8 +27,10 @@ class User extends Authenticatable
         'designation',
         'mobile_number',
         'joining_date',
+        'employee_code',
+        'probation_period',
         'status'
-    
+        
     ];
 
     /**
@@ -91,5 +93,11 @@ class User extends Authenticatable
     public function projects()
     {
         return $this->belongsToMany(Project::class);
+    }
+    public function leaveApplications()
+    {
+        return $this->hasMany(
+            LeaveApplication::class
+        );
     }
 }

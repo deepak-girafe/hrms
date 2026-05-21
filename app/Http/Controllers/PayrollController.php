@@ -2,56 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Payroll;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PayrollExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\PayrollExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PayrollController extends Controller
 {
     /**
      * Payroll List
      */
-    public function index(Request $request)
+    public function index()
     {
-        $query = Payroll::with('user');
+        $payrolls = Payroll::with('user')
 
-        /*
-        |--------------------------------------------------------------------------
-        | Filters
-        |--------------------------------------------------------------------------
-        */
-
-        if($request->month) {
-
-            $query->where(
-                'month',
-                $request->month
-            );
-        }
-
-        if($request->year) {
-
-            $query->where(
-                'year',
-                $request->year
-            );
-        }
-
-        if($request->status) {
-
-            $query->where(
-                'status',
-                $request->status
-            );
-        }
-
-        $payrolls = $query
             ->latest()
-            ->paginate(20);
+
+            ->paginate(10);
 
         return view(
 
@@ -65,300 +36,491 @@ class PayrollController extends Controller
     /**
      * Generate Payroll
      */
-    public function generate(Request $request)
+    public function generatePayroll(Request $request)
     {
         $request->validate([
-    
+
             'month' => 'required',
-    
+
             'year' => 'required'
-    
+
         ]);
-    
+
         /*
         |--------------------------------------------------------------------------
-        | Users
+        | Employees Except Admin
         |--------------------------------------------------------------------------
         */
-    
-        $users = User::where(
-            'status',
-            'Active'
-        )->get();
-    
+
+        $users = User::with([
+
+                'salaryStructure',
+                'role'
+
+            ])
+
+            ->whereHas('role', function($q){
+
+                $q->whereRaw(
+
+                    'LOWER(name) != ?',
+
+                    ['admin']
+
+                );
+
+            })
+
+            ->where('status', 'Active')
+
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Loop Employees
+        |--------------------------------------------------------------------------
+        */
+
         foreach($users as $user) {
-    
+
             /*
             |--------------------------------------------------------------------------
-            | Attendance
+            | Salary Structure
             |--------------------------------------------------------------------------
             */
-    
-            $presentDays = Attendance::where(
-    
+
+            $salary = $user->salaryStructure;
+
+            if(!$salary) {
+
+                continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Total Month Days
+            |--------------------------------------------------------------------------
+            */
+
+            $totalMonthDays = Carbon::create(
+
+                $request->year,
+                $request->month,
+                1
+
+            )->daysInMonth;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Attendance Records
+            |--------------------------------------------------------------------------
+            */
+
+            $attendanceRecords = Attendance::where(
+
                 'user_id',
                 $user->id
-    
+
             )
-    
+
             ->whereMonth(
                 'attendance_date',
                 $request->month
             )
-    
+
             ->whereYear(
                 'attendance_date',
                 $request->year
             )
-    
-            ->where(
-                'status',
-                'Present'
-            )
-    
-            ->count();
-    
+
+            ->get();
+
             /*
             |--------------------------------------------------------------------------
-            | Month Days
+            | Attendance Calculations
             |--------------------------------------------------------------------------
             */
-    
-            $totalMonthDays = cal_days_in_month(
-    
-                CAL_GREGORIAN,
-    
-                $request->month,
-    
-                $request->year
-    
-            );
-    
+
+            $presentDays = 0;
+
+            $halfDays = 0;
+
+            $unpaidLeaves = 0;
+
+            foreach($attendanceRecords as $attendance) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Punch In / Out Required
+                |--------------------------------------------------------------------------
+                */
+
+                if(
+
+                    !$attendance->punch_in
+
+                    ||
+
+                    !$attendance->punch_out
+
+                ) {
+
+                    $unpaidLeaves++;
+
+                    continue;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Full Datetime
+                |--------------------------------------------------------------------------
+                */
+
+                $punchIn = Carbon::parse(
+
+                    $attendance->attendance_date .
+
+                    ' ' .
+
+                    $attendance->punch_in
+
+                );
+
+                $punchOut = Carbon::parse(
+
+                    $attendance->attendance_date .
+
+                    ' ' .
+
+                    $attendance->punch_out
+
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Working Hours
+                |--------------------------------------------------------------------------
+                */
+
+                $workingHours = round(
+
+                    abs(
+
+                        $punchOut
+                            ->diffInMinutes($punchIn)
+
+                    ) / 60,
+
+                    2
+
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Attendance Rules
+                |--------------------------------------------------------------------------
+                */
+
+                /*
+                |--------------------------------------------------------------------------
+                | Less Than 4.5 Hours
+                |--------------------------------------------------------------------------
+                */
+
+                if($workingHours < 4.5) {
+
+                    $unpaidLeaves++;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Half Day
+                |--------------------------------------------------------------------------
+                */
+
+                elseif(
+
+                    $workingHours >= 4.5
+
+                    &&
+
+                    $workingHours < 7
+
+                ) {
+
+                    $halfDays += 1;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Full Day
+                |--------------------------------------------------------------------------
+                */
+
+                else {
+
+                    $presentDays += 1;
+                }
+            }
+
             /*
             |--------------------------------------------------------------------------
-            | Leave Days
+            | Deductible Days
             |--------------------------------------------------------------------------
             */
-    
-            $leaveDays = 0;
-    
+
+            $deductibleDays =
+
+                $unpaidLeaves +
+
+                ($halfDays * 0.5);
+
             /*
             |--------------------------------------------------------------------------
-            | Absent Days
+            | Gross Salary
             |--------------------------------------------------------------------------
             */
-    
-            $absentDays =
-    
-                $totalMonthDays -
-    
-                ($presentDays + $leaveDays);
-    
+
+            $grossSalary =
+
+                ($salary->basic_salary ?? 0) +
+
+                ($salary->hra ?? 0) +
+
+                ($salary->da ?? 0) +
+
+                ($salary->ta ?? 0) +
+
+                ($salary->medical_allowance ?? 0) +
+
+                ($salary->bonus ?? 0) +
+
+                ($salary->special_allowance ?? 0);
+
             /*
             |--------------------------------------------------------------------------
-            | Gross Base Salary
+            | Salary Deductions
             |--------------------------------------------------------------------------
             */
-    
-            $grossBaseSalary =
-    
-                ($user->basic_salary ?? 0) +
-    
-                ($user->hra ?? 0) +
-    
-                ($user->da ?? 0) +
-    
-                ($user->ta ?? 0) +
-    
-                ($user->bonus ?? 0) +
-    
-                ($user->incentive ?? 0) +
-    
-                ($user->other_allowance ?? 0);
-    
+
+            $salaryDeductions =
+
+                ($salary->pf_deduction ?? 0) +
+
+                ($salary->esi_deduction ?? 0) +
+
+                ($salary->tds_deduction ?? 0) +
+
+                ($salary->loan_deduction ?? 0) +
+
+                ($salary->other_deduction ?? 0);
+
             /*
             |--------------------------------------------------------------------------
             | Per Day Salary
             |--------------------------------------------------------------------------
             */
-    
+
             $perDaySalary =
-    
-                $totalMonthDays > 0
-    
-                ? ($grossBaseSalary / $totalMonthDays)
-    
-                : 0;
-    
+
+                $grossSalary / $totalMonthDays;
+
             /*
             |--------------------------------------------------------------------------
-            | Salary According Attendance
+            | Attendance Deduction
             |--------------------------------------------------------------------------
             */
-    
-            $grossSalary = round(
-    
+
+            $attendanceDeduction =
+
                 $perDaySalary *
-    
-                ($presentDays + $leaveDays),
-    
-                2
-    
-            );
-    
+
+                $deductibleDays;
+
             /*
             |--------------------------------------------------------------------------
-            | Deductions
+            | Total Deduction
             |--------------------------------------------------------------------------
             */
-    
-            $pf = $user->pf ?? 0;
-    
-            $esi = $user->esi ?? 0;
-    
-            $tds = $user->tds ?? 0;
-    
-            $professionalTax =
-                $user->professional_tax ?? 0;
-    
-            $otherDeduction =
-                $user->other_deduction ?? 0;
-    
+
             $totalDeduction =
-    
-                $pf +
-    
-                $esi +
-    
-                $tds +
-    
-                $professionalTax +
-    
-                $otherDeduction;
-    
+
+                $salaryDeductions +
+
+                $attendanceDeduction;
+
             /*
             |--------------------------------------------------------------------------
             | Net Salary
             |--------------------------------------------------------------------------
             */
-    
+
             $netSalary =
-    
-                $grossSalary - $totalDeduction;
-    
+
+                max(
+
+                    0,
+
+                    $grossSalary -
+
+                    $totalDeduction
+
+                );
+
             /*
             |--------------------------------------------------------------------------
             | Save Payroll
             |--------------------------------------------------------------------------
             */
-    
+
             Payroll::updateOrCreate(
-    
+
                 [
-    
+
                     'user_id' => $user->id,
-    
+
                     'month' => $request->month,
-    
+
                     'year' => $request->year
-    
+
                 ],
-    
+
                 [
-    
-                    'salary_month' => date(
-    
-                        'F',
-    
-                        mktime(
-                            0,
-                            0,
-                            0,
-                            $request->month,
-                            1
-                        )
-    
-                    ),
-    
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Month
+                    |--------------------------------------------------------------------------
+                    */
+
+                    'salary_month' =>
+
+                        date(
+
+                            'F',
+
+                            mktime(
+                                0,
+                                0,
+                                0,
+                                $request->month,
+                                1
+                            )
+
+                        ),
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Attendance
+                    |--------------------------------------------------------------------------
+                    */
+
                     'working_days' =>
                         $totalMonthDays,
-    
+
                     'present_days' =>
                         $presentDays,
-    
+
+                    'half_days' =>
+                        $halfDays,
+
                     'leave_days' =>
-                        $leaveDays,
-    
+                        $unpaidLeaves,
+
                     'absent_days' =>
-                        $absentDays,
-    
+                        $deductibleDays,
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Earnings
+                    |--------------------------------------------------------------------------
+                    */
+
                     'basic_salary' =>
-                        $user->basic_salary ?? 0,
-    
+                        $salary->basic_salary ?? 0,
+
                     'hra' =>
-                        $user->hra ?? 0,
-    
+                        $salary->hra ?? 0,
+
                     'da' =>
-                        $user->da ?? 0,
-    
+                        $salary->da ?? 0,
+
                     'ta' =>
-                        $user->ta ?? 0,
-    
+                        $salary->ta ?? 0,
+
                     'bonus' =>
-                        $user->bonus ?? 0,
-    
+                        $salary->bonus ?? 0,
+
                     'incentive' =>
-                        $user->incentive ?? 0,
-    
+                        $salary->special_allowance ?? 0,
+
                     'other_allowance' =>
-                        $user->other_allowance ?? 0,
-    
-                    'pf' => $pf,
-    
-                    'esi' => $esi,
-    
-                    'tds' => $tds,
-    
+                        $salary->medical_allowance ?? 0,
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Deductions
+                    |--------------------------------------------------------------------------
+                    */
+
+                    'pf' =>
+                        $salary->pf_deduction ?? 0,
+
+                    'esi' =>
+                        $salary->esi_deduction ?? 0,
+
+                    'tds' =>
+                        $salary->tds_deduction ?? 0,
+
                     'professional_tax' =>
-                        $professionalTax,
-    
+                        0,
+
                     'other_deduction' =>
-                        $otherDeduction,
-    
+                        $salary->other_deduction ?? 0,
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Final Salary
+                    |--------------------------------------------------------------------------
+                    */
+
                     'gross_salary' =>
-                        $grossSalary,
-    
+                        round($grossSalary, 2),
+
                     'total_deduction' =>
-                        $totalDeduction,
-    
+                        round($totalDeduction, 2),
+
                     'net_salary' =>
-                        $netSalary,
-    
-                    'salary_date' => now(),
-    
+                        round($netSalary, 2),
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Payment
+                    |--------------------------------------------------------------------------
+                    */
+
+                    'salary_date' =>
+                        now(),
+
                     'payment_status' =>
                         'Pending'
-    
+
                 ]
-    
+
             );
         }
-    
-        return redirect()
-    
-            ->route('payrolls.index')
-    
-            ->with(
-    
-                'success',
-    
-                'Payroll generated successfully'
-    
-            );
+
+        return back()->with(
+
+            'success',
+
+            'Payroll generated successfully'
+
+        );
     }
 
     /**
-     * Mark Paid
+     * Mark Salary Paid
      */
     public function markPaid($id)
     {
@@ -374,27 +536,13 @@ class PayrollController extends Controller
 
             'success',
 
-            'Payroll marked as paid'
+            'Salary marked as paid'
 
         );
     }
 
     /**
-     * Export Excel
-     */
-    public function exportExcel()
-    {
-        return Excel::download(
-
-            new PayrollExport,
-
-            'payroll.xlsx'
-
-        );
-    }
-
-    /**
-     * Payslip PDF
+     * Download Payslip
      */
     public function payslip($id)
     {
@@ -416,23 +564,20 @@ class PayrollController extends Controller
             $payroll->user->name .
 
             '.pdf'
+
         );
     }
 
     /**
-     * Delete Payroll
+     * Export Excel
      */
-    public function destroy($id)
+    public function export()
     {
-        $payroll = Payroll::findOrFail($id);
+        return Excel::download(
 
-        $payroll->delete();
+            new PayrollExport,
 
-        return back()->with(
-
-            'success',
-
-            'Payroll deleted successfully'
+            'payrolls.xlsx'
 
         );
     }

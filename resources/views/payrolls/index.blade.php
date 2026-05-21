@@ -26,14 +26,14 @@
 
         <div class="d-flex gap-2">
 
-            <a href="{{ route('payrolls.export.excel') }}"
+            <!-- <a href="{{ route('payrolls.export.excel') }}"
                class="btn btn-success rounded-pill">
 
                 <i class="bi bi-file-earmark-excel me-2"></i>
 
                 Export Excel
 
-            </a>
+            </a> -->
 
             <button class="btn btn-primary rounded-pill"
                     data-bs-toggle="modal"
@@ -87,7 +87,7 @@
 
                             <th>Net Salary</th>
 
-                            <th>Status</th>
+                            <!-- <th>Status</th> -->
 
                             <th width="250">Actions</th>
 
@@ -153,7 +153,7 @@
 
                                 </td>
 
-                                <td>
+                                <!-- <td>
 
                                     @if($payroll->status == 'Paid')
 
@@ -173,7 +173,7 @@
 
                                     @endif
 
-                                </td>
+                                </td> -->
 
                                 <td>
 
@@ -188,7 +188,7 @@
 
                                         </a>
 
-                                        @if($payroll->status != 'Paid')
+                                        <!-- @if($payroll->status != 'Paid')
 
                                             <form method="POST"
                                                   action="{{ route('payrolls.markPaid',$payroll->id) }}">
@@ -203,7 +203,7 @@
 
                                             </form>
 
-                                        @endif
+                                        @endif -->
 
                                     </div>
 

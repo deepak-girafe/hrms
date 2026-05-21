@@ -338,7 +338,58 @@ $userMenus = $user->role
             </a>
 
             </li>    
+        {{-- APPLY LEAVE --}}
 
+        @if(
+            strtolower(optional(auth()->user()->role)->name)
+            != 'admin'
+        )
+
+        <li class="nav-item mb-2">
+
+            <a href="{{ route('leave-applications.index') }}"
+            class="nav-link {{ request()->routeIs('leave-applications.*') ? 'active' : '' }}">
+
+                <i class="bi bi-calendar2-week me-2"></i>
+
+                Apply Leave
+
+            </a>
+
+        </li>
+
+        @endif    
+
+            @if(
+        in_array(
+
+            strtolower(optional(auth()->user()->role)->name),
+
+            [
+
+                'hr',
+                'department head',
+                'team lead'
+
+            ]
+
+        )
+    )
+
+    <li class="nav-item mb-2">
+
+        <a href="{{ route('leave-approvals.index') }}"
+        class="nav-link {{ request()->routeIs('leave-approvals.*') ? 'active' : '' }}">
+
+            <i class="bi bi-check2-square me-2"></i>
+
+            Leave Approvals
+
+        </a>
+
+    </li>
+
+    @endif
     </ul>
 
 </div>

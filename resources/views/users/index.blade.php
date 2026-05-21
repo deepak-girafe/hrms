@@ -95,7 +95,23 @@
 
                         <td>
 
-                            {{ $user->reportingManager->name ?? '-' }}
+                        @if($user->reportingManagers->count())
+
+                        @foreach($user->reportingManagers as $manager)
+
+                            <span class="badge bg-primary">
+
+                                {{ $manager->name }}
+
+                            </span>
+
+                        @endforeach
+
+                        @else
+
+                        -
+
+                        @endif
 
                         </td>
 

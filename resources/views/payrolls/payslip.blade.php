@@ -6,30 +6,56 @@
 
     <title>
 
-        Payslip
+        Salary Payslip
 
     </title>
 
     <style>
 
         body{
-            font-family: sans-serif;
-            font-size: 14px;
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 13px;
+            color:#222;
+        }
+
+        .header{
+            text-align:center;
+            margin-bottom:25px;
+        }
+
+        .header h2{
+            margin:0;
+            font-size:28px;
         }
 
         table{
             width:100%;
             border-collapse: collapse;
+            margin-bottom:20px;
         }
 
         table td,
         table th{
-            border:1px solid #ccc;
-            padding:8px;
+            border:1px solid #dcdcdc;
+            padding:10px;
+        }
+
+        table th{
+            background:#f5f5f5;
         }
 
         .text-center{
             text-align:center;
+        }
+
+        .fw-bold{
+            font-weight:bold;
+        }
+
+        .net-salary{
+            font-size:18px;
+            font-weight:bold;
+            color:#0f8b4c;
         }
 
     </style>
@@ -38,17 +64,34 @@
 
 <body>
 
-    <h2 class="text-center">
+    <div class="header">
 
-        Salary Payslip
+        <h2>
 
-    </h2>
+            Salary Payslip
+
+        </h2>
+
+        <p>
+
+            {{ $payroll->salary_month }}
+            {{ $payroll->year }}
+
+        </p>
+
+    </div>
+
+    {{-- EMPLOYEE DETAILS --}}
 
     <table>
 
         <tr>
 
-            <th>Employee</th>
+            <th width="30%">
+
+                Employee
+
+            </th>
 
             <td>
 
@@ -60,7 +103,27 @@
 
         <tr>
 
-            <th>Designation</th>
+            <th>
+
+                Employee Code
+
+            </th>
+
+            <td>
+
+                {{ $payroll->user->employee_code }}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <th>
+
+                Designation
+
+            </th>
 
             <td>
 
@@ -70,140 +133,177 @@
 
         </tr>
 
-        <tr>
-
-            <th>Month</th>
-
-            <td>
-
-                {{ date('F', mktime(0,0,0,$payroll->month,1)) }}
-                {{ $payroll->year }}
-
-            </td>
-
-        </tr>
-
     </table>
 
-    <br>
+    {{-- EARNINGS / DEDUCTIONS --}}
 
     <table>
 
         <tr>
 
-            <th>Earnings</th>
+            <th>
 
-            <th>Amount</th>
+                Earnings
 
-            <th>Deductions</th>
+            </th>
 
-            <th>Amount</th>
+            <th>
+
+                Amount
+
+            </th>
+
+            <th>
+
+                Deductions
+
+            </th>
+
+            <th>
+
+                Amount
+
+            </th>
 
         </tr>
 
         <tr>
 
             <td>Basic Salary</td>
-
-            <td>{{ $payroll->basic_salary }}</td>
+            <td>₹ {{ number_format($payroll->basic_salary,2) }}</td>
 
             <td>PF</td>
-
-            <td>{{ $payroll->pf }}</td>
+            <td>₹ {{ number_format($payroll->pf,2) }}</td>
 
         </tr>
 
         <tr>
 
             <td>HRA</td>
-
-            <td>{{ $payroll->hra }}</td>
+            <td>₹ {{ number_format($payroll->hra,2) }}</td>
 
             <td>ESI</td>
-
-            <td>{{ $payroll->esi }}</td>
+            <td>₹ {{ number_format($payroll->esi,2) }}</td>
 
         </tr>
 
         <tr>
 
             <td>DA</td>
-
-            <td>{{ $payroll->da }}</td>
+            <td>₹ {{ number_format($payroll->da,2) }}</td>
 
             <td>TDS</td>
-
-            <td>{{ $payroll->tds }}</td>
+            <td>₹ {{ number_format($payroll->tds,2) }}</td>
 
         </tr>
 
         <tr>
 
             <td>TA</td>
+            <td>₹ {{ number_format($payroll->ta,2) }}</td>
 
-            <td>{{ $payroll->ta }}</td>
-
-            <td>Professional Tax</td>
-
-            <td>{{ $payroll->professional_tax }}</td>
+            <td>Other Deduction</td>
+            <td>₹ {{ number_format($payroll->other_deduction,2) }}</td>
 
         </tr>
 
         <tr>
 
             <td>Bonus</td>
+            <td>₹ {{ number_format($payroll->bonus,2) }}</td>
 
-            <td>{{ $payroll->bonus }}</td>
-
-            <td>Other Deduction</td>
-
-            <td>{{ $payroll->other_deduction }}</td>
+            <td></td>
+            <td></td>
 
         </tr>
 
     </table>
 
-    <br>
+    {{-- ATTENDANCE SUMMARY --}}
 
     <table>
 
         <tr>
 
-            <th>Present Days</th>
+            <th>Total Month Days</th>
+            <td>{{ $payroll->working_days }}</td>
 
+            <th>Present Days</th>
             <td>{{ $payroll->present_days }}</td>
 
-            <th>Absent Days</th>
+        </tr>
 
+        <tr>
+
+            <th>Half Days</th>
+            <td>{{ $payroll->half_days }}</td>
+
+            <th>Unpaid Leaves</th>
+            <td>{{ $payroll->leave_days }}</td>
+
+        </tr>
+
+        <tr>
+
+            <th>Deductible Days</th>
             <td>{{ $payroll->absent_days }}</td>
 
+            <th>Salary Status</th>
+            <td>{{ $payroll->payment_status }}</td>
+
+        </tr>
+
+    </table>
+
+    {{-- FINAL SALARY --}}
+
+    <table>
+
+        <tr>
+
+            <th width="50%">
+
+                Gross Salary
+
+            </th>
+
+            <td>
+
+                ₹ {{ number_format($payroll->gross_salary,2) }}
+
+            </td>
+
         </tr>
 
         <tr>
 
-            <th>Gross Salary</th>
+            <th>
 
-            <td>{{ $payroll->gross_salary }}</td>
+                Total Deduction
 
-            <th>Total Deduction</th>
+            </th>
 
-            <td>{{ $payroll->total_deduction }}</td>
+            <td>
+
+                ₹ {{ number_format($payroll->total_deduction,2) }}
+
+            </td>
 
         </tr>
 
         <tr>
 
-            <th colspan="2">
+            <th>
 
                 Net Salary
 
             </th>
 
-            <th colspan="2">
+            <td class="net-salary">
 
                 ₹ {{ number_format($payroll->net_salary,2) }}
 
-            </th>
+            </td>
 
         </tr>
 

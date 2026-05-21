@@ -13,6 +13,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\LeaveApplicationController;
 Route::redirect('/', '/login');
 
 Route::middleware(['auth'])->group(function () {
@@ -101,12 +102,12 @@ Route::middleware(['auth'])->group(function () {
     
     Route::post(
         'payrolls/generate',
-        [PayrollController::class, 'generate']
+        [PayrollController::class, 'generatePayroll']
     )->name('payrolls.generate');
     
     Route::get(
         'payrolls/export/excel',
-        [PayrollController::class, 'exportExcel']
+        [PayrollController::class, 'export']
     )->name('payrolls.export.excel');
     
     Route::get(
@@ -118,6 +119,38 @@ Route::middleware(['auth'])->group(function () {
         'payrolls/mark-paid/{id}',
         [PayrollController::class, 'markPaid']
     )->name('payrolls.markPaid');
+
+    Route::resource(
+
+        'leave-applications',
+    
+        LeaveApplicationController::class
+    
+    );
+    
+    Route::get(
+    
+        'leave-approvals',
+    
+        [LeaveApplicationController::class, 'approvals']
+    
+    )->name('leave-approvals.index');
+    
+    Route::post(
+    
+        'leave-approvals/{id}/approve',
+    
+        [LeaveApplicationController::class, 'approve']
+    
+    )->name('leave-approvals.approve');
+    
+    Route::post(
+    
+        'leave-approvals/{id}/reject',
+    
+        [LeaveApplicationController::class, 'reject']
+    
+    )->name('leave-approvals.reject');
 });
 
 

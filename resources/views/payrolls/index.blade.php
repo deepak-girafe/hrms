@@ -35,15 +35,35 @@
 
             </a> -->
 
-            <button class="btn btn-primary rounded-pill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#generatePayrollModal">
+            @if(
 
-                <i class="bi bi-cash-stack me-2"></i>
+in_array(
 
-                Generate Payroll
+    strtolower(auth()->user()->role->name),
 
-            </button>
+    [
+
+        'admin',
+
+        'hr'
+
+    ]
+
+)
+
+)
+
+<button class="btn btn-primary rounded-pill"
+        data-bs-toggle="modal"
+        data-bs-target="#generatePayrollModal">
+
+    <i class="bi bi-cash-stack me-2"></i>
+
+    Generate Payroll
+
+</button>
+
+@endif
 
         </div>
 

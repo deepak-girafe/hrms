@@ -501,7 +501,7 @@ in_array(
 
     <ul class="nav flex-column ms-3 mt-2">
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
 
             <a href="{{ route('reports.dashboard') }}"
                class="nav-link">
@@ -510,7 +510,7 @@ in_array(
 
             </a>
 
-        </li>
+        </li> -->
 
         <li class="nav-item">
 
@@ -534,7 +534,7 @@ in_array(
 
         </li>
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
 
             <a href="{{ route('reports.leaves') }}"
                class="nav-link">
@@ -543,9 +543,9 @@ in_array(
 
             </a>
 
-        </li>
+        </li> -->
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
 
             <a href="{{ route('reports.eod') }}"
                class="nav-link">
@@ -554,9 +554,9 @@ in_array(
 
             </a>
 
-        </li>
+        </li> -->
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
 
             <a href="{{ route('reports.department') }}"
                class="nav-link">
@@ -565,7 +565,7 @@ in_array(
 
             </a>
 
-        </li>
+        </li> -->
 
     </ul>
 

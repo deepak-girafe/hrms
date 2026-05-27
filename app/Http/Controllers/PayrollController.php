@@ -18,13 +18,74 @@ class PayrollController extends Controller
      */
     public function index()
     {
-        $payrolls = Payroll::with('user')
-            ->latest()
-            ->paginate(10);
-
+        $user = auth()->user();
+    
+        $roleName = strtolower(
+    
+            optional($user->role)->name ?? ''
+    
+        );
+    
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN / HR
+        |--------------------------------------------------------------------------
+        */
+    
+        if(
+    
+            in_array(
+    
+                $roleName,
+    
+                [
+    
+                    'admin',
+    
+                    'hr'
+    
+                ]
+    
+            )
+    
+        ) {
+    
+            $payrolls = Payroll::with('user')
+    
+                ->latest()
+    
+                ->paginate(10);
+        }
+    
+        /*
+        |--------------------------------------------------------------------------
+        | OTHER USERS
+        |--------------------------------------------------------------------------
+        */
+    
+        else {
+    
+            $payrolls = Payroll::with('user')
+    
+                ->where(
+    
+                    'user_id',
+    
+                    $user->id
+    
+                )
+    
+                ->latest()
+    
+                ->paginate(10);
+        }
+    
         return view(
+    
             'payrolls.index',
+    
             compact('payrolls')
+    
         );
     }
 

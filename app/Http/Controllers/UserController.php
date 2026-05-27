@@ -20,97 +20,111 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::with([
-
                 'role',
-
                 'departments',
-
                 'reportingManagers'
-
             ])
+
+            /*
+            |--------------------------------------------------------------------------
+            | TL & Department Head Access Control
+            |--------------------------------------------------------------------------
+            */
+
+            ->when(
+
+                in_array(auth()->user()->role_id, [1, 2]),
+
+                function ($q) {
+
+                    $q->whereIn(
+
+                        'id',
+
+                        \DB::table('user_reporting')
+
+                            ->where(
+                                'reporting_user_id',
+                                auth()->id()
+                            )
+
+                            ->pluck('user_id')
+                    );
+                }
+
+            )
+
             /*
             |--------------------------------------------------------------------------
             | Name Filter
             |--------------------------------------------------------------------------
             */
+
             ->when(
 
                 $request->name,
-            
+
                 function($q) use ($request){
-            
+
                     $q->where(function($subQ) use ($request){
-            
+
                         $subQ->where(
-            
                             'name',
-            
                             'like',
-            
                             '%' . $request->name . '%'
-            
                         )
-            
-                      
+
                         ->orWhere(
-            
                             'employee_code',
-            
                             'like',
-            
                             '%' . $request->name . '%'
-            
                         );
-            
+
                     });
                 }
-            
+
             )
-            /** On Leave */
+
+            /*
+            |--------------------------------------------------------------------------
+            | On Leave
+            |--------------------------------------------------------------------------
+            */
+
             ->when(
 
                 $request->on_leave,
-            
+
                 function($q){
-            
+
                     $q->whereIn(
-            
+
                         'id',
-            
+
                         LeaveApplication::where(
-            
                                 'status',
-            
                                 'Approved'
-            
                             )
-            
+
                             ->whereDate(
-            
                                 'from_date',
-            
                                 '<=',
-            
                                 today()
-            
                             )
-            
+
                             ->whereDate(
-            
                                 'to_date',
-            
                                 '>=',
-            
                                 today()
-            
                             )
-            
+
                             ->pluck('user_id')
-            
+
                     );
                 }
-            
-            )    
+
+            )
+
             /*
             |--------------------------------------------------------------------------
             | Role Filter
@@ -124,11 +138,8 @@ class UserController extends Controller
                 function($q) use ($request){
 
                     $q->where(
-
                         'role_id',
-
                         $request->role_id
-
                     );
                 }
 
@@ -153,11 +164,8 @@ class UserController extends Controller
                         function($subQ) use ($request){
 
                             $subQ->where(
-
                                 'departments.id',
-
                                 $request->department_id
-
                             );
                         }
 
@@ -175,28 +183,25 @@ class UserController extends Controller
             ->when(
 
                 $request->reporting_to,
-            
+
                 function($q) use ($request){
-            
+
                     $q->whereIn(
-            
+
                         'id',
-            
+
                         \DB::table('user_reporting')
-            
+
                             ->where(
-            
                                 'reporting_user_id',
-            
                                 $request->reporting_to
-            
                             )
-            
+
                             ->pluck('user_id')
-            
+
                     );
                 }
-            
+
             )
 
             /*
@@ -212,13 +217,9 @@ class UserController extends Controller
                 function($q) use ($request){
 
                     $q->whereDate(
-
                         'joining_date',
-
                         '>=',
-
                         $request->from_date
-
                     );
                 }
 
@@ -231,13 +232,9 @@ class UserController extends Controller
                 function($q) use ($request){
 
                     $q->whereDate(
-
                         'joining_date',
-
                         '<=',
-
                         $request->to_date
-
                     );
                 }
 
@@ -256,45 +253,28 @@ class UserController extends Controller
         */
 
         $roles = Role::where(
-
             'status',
-
             'Active'
-
         )->get();
 
         $departments = Department::where(
-
             'status',
-
             'Active'
-
         )->get();
 
         $managers = User::where(
-
             'status',
-
             'Active'
-
         )->get();
 
         return view(
-
             'users.index',
-
             compact(
-
                 'users',
-
                 'roles',
-
                 'departments',
-
                 'managers'
-
             )
-
         );
     }
 
@@ -1095,5 +1075,50 @@ class UserController extends Controller
             compact('user')
 
         );
+    }
+    public function checkEmployeeCode(Request $request)
+    {
+        $query = User::where('employee_code', $request->employee_code);
+
+        // Ignore current user while edit
+        if($request->user_id){
+            $query->where('id', '!=', $request->user_id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists
+        ]);
+    }
+    public function checkEmail(Request $request)
+    {
+        $query = User::where('email', $request->email);
+
+        // Ignore current user during edit
+        if($request->user_id){
+            $query->where('id', '!=', $request->user_id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists
+        ]);
+    }
+    public function checkMobile(Request $request)
+    {
+        $query = User::where('mobile_number', $request->mobile_number);
+
+        // Ignore current user during edit
+        if($request->user_id){
+            $query->where('id', '!=', $request->user_id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists
+        ]);
     }
 }

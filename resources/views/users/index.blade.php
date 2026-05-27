@@ -52,7 +52,7 @@
     
     color:#0d6efd;
     font-weight:600;
-    padding:8px 12px;
+    
     border-radius:20px;
 }
 
@@ -84,14 +84,18 @@
 
         </div>
 
+        @if(in_array(strtolower(optional(auth()->user()->role)->name), ['admin', 'hr']))
+
         <a href="{{ route('users.create') }}"
-           class="btn btn-primary rounded-pill px-4 shadow-sm">
+        class="btn btn-primary rounded-pill px-4 shadow-sm">
 
             <i class="bi bi-plus-circle me-1"></i>
 
             Add User
 
         </a>
+
+        @endif
 
     </div>
 

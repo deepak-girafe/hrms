@@ -356,10 +356,12 @@ body{
                                 </label>
 
                                 <input type="text"
-                                       name="employee_code"
-                                       value="{{ old('employee_code', $user->employee_code ?? '') }}"
-                                       class="form-control required-field"
-                                       placeholder="EMP-1001">
+                                    name="employee_code"
+                                    id="employee_code"
+                                    value="{{ old('employee_code', $user->employee_code ?? '') }}"
+                                    class="form-control required-field"
+                                    placeholder="EMP-1001">
+                                <small class="text-danger" id="employee_code_error"></small>
 
                             </div>
 
@@ -387,9 +389,13 @@ body{
                                 </label>
 
                                 <input type="email"
-                                       name="email"
-                                       value="{{ old('email', $user->email ?? '') }}"
-                                       class="form-control required-field">
+                                    name="email"
+                                    id="email"
+                                    value="{{ old('email', $user->email ?? '') }}"
+                                    class="form-control required-field"
+                                    placeholder="example@gmail.com">
+
+                                <small class="text-danger" id="email_error"></small>
 
                             </div>
 
@@ -402,9 +408,14 @@ body{
                                 </label>
 
                                 <input type="text"
-                                       name="mobile_number"
-                                       value="{{ old('mobile_number', $user->mobile_number ?? '') }}"
-                                       class="form-control required-field">
+                                    name="mobile_number"
+                                    id="mobile_number"
+                                    value="{{ old('mobile_number', $user->mobile_number ?? '') }}"
+                                    class="form-control required-field"
+                                    maxlength="10"
+                                    placeholder="9876543210">
+
+                                <small class="text-danger" id="mobile_error"></small>
 
                             </div>
 
@@ -997,4 +1008,160 @@ roleDropdown.addEventListener(
     toggleReporting
 );
 
+</script>
+
+<script>
+$(document).ready(function () {
+
+    $('#employee_code').on('keyup blur', function () {
+
+        let employee_code = $(this).val();
+
+        if(employee_code == ''){
+            $('#employee_code_error').text('');
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('users.check-employee-code') }}",
+            type: "POST",
+            data: {
+                employee_code: employee_code,
+                user_id: "{{ $user->id ?? '' }}",
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+
+                if(response.exists){
+                    $('#employee_code_error').text('Employee code already exists');
+                    $('#employee_code').addClass('is-invalid');
+                    $('#employee_code').val('');
+                    $('#employee_code').focus();
+                } else {
+                    $('#employee_code_error').text('');
+                    $('#employee_code').removeClass('is-invalid');
+                }
+
+            }
+        });
+
+    });
+
+});
+</script>
+
+<script>
+$(document).ready(function () {
+
+    $('#email').on('change', function () {
+
+        let email = $(this).val();
+
+        // Email regex
+        let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Empty check
+        if(email == ''){
+            $('#email_error').text('');
+            $('#email').removeClass('is-invalid');
+            return;
+        }
+
+        // Format check
+        if(!emailPattern.test(email)){
+            $('#email_error').text('Please enter valid email address');
+            $('#email').addClass('is-invalid');
+            $('#email').val('');  
+            $('#email').focus();  
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('check.email') }}",
+            type: "POST",
+            data: {
+                email: email,
+                user_id: "{{ $user->id ?? '' }}",
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+
+                if(response.exists){
+                    $('#email_error').text('Email already exists');
+                    $('#email').addClass('is-invalid');
+                    
+                    $('#email').val('');  
+                    $('#email').focus();  
+                } else {
+                    $('#email_error').text('');
+                    $('#email').removeClass('is-invalid');
+                   
+                }
+
+            }
+        });
+
+    });
+
+});
+</script>
+<script>
+$(document).ready(function () {
+
+    $('#mobile_number').on('change', function () {
+
+        // Allow only numeric
+        this.value = this.value.replace(/\D/g, '');
+
+        let mobile = $(this).val();
+
+        // Empty check
+        if(mobile == ''){
+            $('#mobile_error').text('');
+            $('#mobile_number').removeClass('is-invalid');
+            return;
+        }
+
+        // Length check
+        if(mobile.length < 10){
+            $('#mobile_error').text('Mobile number must be 10 digits');
+            $('#mobile_number').addClass('is-invalid');
+            $('button[type="submit"]').prop('disabled', true);
+            $('#mobile_number').val('');  
+                    $('#mobile_number').focus();
+            return;
+        }
+
+        // AJAX unique check
+        $.ajax({
+            url: "{{ route('check.mobile') }}",
+            type: "POST",
+            data: {
+                mobile_number: mobile,
+                user_id: "{{ $user->id ?? '' }}",
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+
+                if(response.exists){
+
+                    $('#mobile_error').text('Mobile number already exists');
+                    $('#mobile_number').addClass('is-invalid');
+                    $('#mobile_number').val('');  
+                    $('#mobile_number').focus();  
+
+                } else {
+
+                    $('#mobile_error').text('');
+                    $('#mobile_number').removeClass('is-invalid');
+                   
+
+                }
+
+            }
+        });
+
+    });
+
+});
 </script>

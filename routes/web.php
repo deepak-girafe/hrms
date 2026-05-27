@@ -268,5 +268,12 @@ Route::prefix('reports')
             [UserController::class, 'documents']
         
         )->name('users.documents');
+        Route::post('/check-employee-code', [UserController::class, 'checkEmployeeCode'])
+        ->name('users.check-employee-code');
+        Route::post('/check-email', [UserController::class, 'checkEmail'])
+        ->name('check.email');
+        Route::post('/check-mobile', [UserController::class, 'checkMobile'])
+        ->name('check.mobile');
+        
     });
 require __DIR__.'/auth.php';

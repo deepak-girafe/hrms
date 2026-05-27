@@ -113,32 +113,115 @@ class ReportController extends Controller
     {
         $attendance = Attendance::with('user')
 
+            /*
+            |--------------------------------------------------------------------------
+            | Employee Search
+            |--------------------------------------------------------------------------
+            */
+
             ->when(
 
-                $request->month,
+                $request->employee,
 
                 function($q) use ($request){
 
-                    $q->whereMonth(
+                    $q->whereHas(
 
-                        'attendance_date',
+                        'user',
 
-                        $request->month
+                        function($subQ) use ($request){
+
+                            $subQ->where(
+
+                                'name',
+
+                                'like',
+
+                                '%' . $request->employee . '%'
+
+                            )
+
+                            ->orWhere(
+
+                                'employee_code',
+
+                                'like',
+
+                                '%' . $request->employee . '%'
+
+                            );
+                        }
 
                     );
                 }
 
             )
 
-            ->latest()
+            /*
+            |--------------------------------------------------------------------------
+            | From Date
+            |--------------------------------------------------------------------------
+            */
 
-            ->paginate(20);
+            ->when(
+
+                $request->from_date,
+
+                function($q) use ($request){
+
+                    $q->whereDate(
+
+                        'attendance_date',
+
+                        '>=',
+
+                        $request->from_date
+
+                    );
+                }
+
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | To Date
+            |--------------------------------------------------------------------------
+            */
+
+            ->when(
+
+                $request->to_date,
+
+                function($q) use ($request){
+
+                    $q->whereDate(
+
+                        'attendance_date',
+
+                        '<=',
+
+                        $request->to_date
+
+                    );
+                }
+
+            )
+
+            ->latest('attendance_date')
+
+            ->paginate(20)
+
+            ->withQueryString();
 
         return view(
 
             'reports.attendance',
 
-            compact('attendance')
+            compact(
+
+                'attendance'
+
+            )
 
         );
     }
@@ -147,38 +230,137 @@ class ReportController extends Controller
      * Payroll Report
      */
     public function payroll(Request $request)
-    {
-        $payrolls = Payroll::with('user')
+        {
+            $payrolls = Payroll::with('user')
 
-            ->when(
+                /*
+                |--------------------------------------------------------------------------
+                | Employee Search
+                |--------------------------------------------------------------------------
+                */
 
-                $request->month,
+                ->when(
 
-                function($q) use ($request){
+                    $request->employee,
 
-                    $q->where(
+                    function($q) use ($request){
 
-                        'month',
+                        $q->whereHas(
 
-                        $request->month
+                            'user',
 
-                    );
-                }
+                            function($subQ) use ($request){
 
-            )
+                                $subQ->where(
 
-            ->latest()
+                                    'name',
 
-            ->paginate(20);
+                                    'like',
 
-        return view(
+                                    '%' . $request->employee . '%'
 
-            'reports.payroll',
+                                )
 
-            compact('payrolls')
+                                ->orWhere(
 
-        );
-    }
+                                    'employee_code',
+
+                                    'like',
+
+                                    '%' . $request->employee . '%'
+
+                                );
+                            }
+
+                        );
+                    }
+
+                )
+
+                /*
+                |--------------------------------------------------------------------------
+                | Salary Month Filter
+                |--------------------------------------------------------------------------
+                */
+
+                ->when(
+
+                    $request->salary_month,
+                
+                    function($q) use ($request){
+                
+                        $date = explode(
+                
+                            '-',
+                
+                            $request->salary_month
+                
+                        );
+                
+                        $year = $date[0] ?? null;
+                
+                        $month = $date[1] ?? null;
+                
+                        $q->where(
+                
+                                'year',
+                
+                                $year
+                
+                            )
+                
+                            ->where(
+                
+                                'month',
+                
+                                (int)$month
+                
+                            );
+                    }
+                
+                )
+
+                /*
+                |--------------------------------------------------------------------------
+                | Payment Status Filter
+                |--------------------------------------------------------------------------
+                */
+
+                ->when(
+
+                    $request->payment_status,
+
+                    function($q) use ($request){
+
+                        $q->where(
+
+                            'payment_status',
+
+                            $request->payment_status
+
+                        );
+                    }
+
+                )
+
+                ->latest()
+
+                ->paginate(20)
+
+                ->withQueryString();
+
+            return view(
+
+                'reports.payroll',
+
+                compact(
+
+                    'payrolls'
+
+                )
+
+            );
+        }
 
     /**
      * Leave Report

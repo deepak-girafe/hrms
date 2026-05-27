@@ -23,7 +23,7 @@
 
     </div>
 
-    <div class="row mb-4">
+    <!-- <div class="row mb-4">
 
     @foreach($leaveSummary as $summary)
 
@@ -95,7 +95,7 @@
 
     @endforeach
 
-</div>
+</div> -->
 
     <div class="card border-0 shadow-sm rounded-4">
 

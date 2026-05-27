@@ -336,8 +336,75 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        
+
         $latestMembers = $teamMembers
             ->take(10);
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pending Leave Requests
+        |--------------------------------------------------------------------------
+        */
+
+        $pendingLeaveRequests = 0;
+
+        if(class_exists(\App\Models\LeaveApplication::class)) {
+
+            // HR
+            if($roleName == 'hr') {
+
+                $pendingLeaveRequests = \App\Models\LeaveApplication::whereNotIn(
+                        'status',
+                        ['Approved', 'Rejected']
+                    )
+                    ->count();
+
+            }
+
+            // Department Head & Team Lead
+            elseif(
+
+                in_array(
+
+                    $roleName,
+
+                    [
+
+                        'department head',
+
+                        'team lead'
+
+                    ]
+
+                )
+
+            ) {
+
+                $reportingUserIds = DB::table('user_reporting')
+
+                    ->where(
+                        'reporting_user_id',
+                        $user->id
+                    )
+
+                    ->pluck('user_id');
+
+                $pendingLeaveRequests = \App\Models\LeaveApplication::whereIn(
+                        'user_id',
+                        $reportingUserIds
+                    )
+
+                    ->whereNotIn(
+                        'status',
+                        ['Approved', 'Rejected']
+                    )
+
+                    ->count();
+            }
+        }
 
         return view(
 
@@ -365,7 +432,9 @@ class DashboardController extends Controller
 
                 'isHoliday',
 
-                'dayName'
+                'dayName',
+
+                'pendingLeaveRequests'
 
             )
 

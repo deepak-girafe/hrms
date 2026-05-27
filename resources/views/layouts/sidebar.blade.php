@@ -268,24 +268,7 @@ $userMenus = $user->role
 
         @endif
 
-        {{-- Projects --}}
-
-        @if(in_array('projects.index', $userMenus))
-
-            <li class="nav-item mb-2">
-
-                <a href="{{ route('projects.index') }}"
-                   class="nav-link {{ request()->routeIs('projects.*') ? 'active' : '' }}">
-
-                    <i class="bi bi-kanban me-2"></i>
-
-                    Projects
-
-                </a>
-
-            </li>
-
-        @endif
+       
 
         {{-- Employees --}}
 
@@ -299,6 +282,25 @@ $userMenus = $user->role
                     <i class="bi bi-person-lines-fill me-2"></i>
 
                     Employees
+
+                </a>
+
+            </li>
+
+        @endif
+
+        {{-- Projects --}}
+
+        @if(in_array('projects.index', $userMenus))
+
+            <li class="nav-item mb-2">
+
+                <a href="{{ route('projects.index') }}"
+                class="nav-link {{ request()->routeIs('projects.*') ? 'active' : '' }}">
+
+                    <i class="bi bi-kanban me-2"></i>
+
+                    Projects
 
                 </a>
 
@@ -454,6 +456,122 @@ $userMenus = $user->role
         </li>
 
     @endif
+
+@endif
+@if(
+
+strtolower(auth()->user()->role->name) == 'admin'
+
+||
+
+in_array(
+
+    strtolower(auth()->user()->role->name),
+
+    [
+
+        'hr',
+
+        'department head'
+
+    ]
+
+)
+
+)
+
+<li class="nav-item">
+
+<a class="nav-link collapsed"
+   data-bs-toggle="collapse"
+   href="#reportsMenu">
+
+    <i class="bi bi-bar-chart-line"></i>
+
+    <span>
+
+        Reports & Analytics
+
+    </span>
+
+</a>
+
+<div class="collapse"
+     id="reportsMenu">
+
+    <ul class="nav flex-column ms-3 mt-2">
+
+        <li class="nav-item">
+
+            <a href="{{ route('reports.dashboard') }}"
+               class="nav-link">
+
+                Dashboard
+
+            </a>
+
+        </li>
+
+        <li class="nav-item">
+
+            <a href="{{ route('reports.attendance') }}"
+               class="nav-link">
+
+                Attendance Report
+
+            </a>
+
+        </li>
+
+        <li class="nav-item">
+
+            <a href="{{ route('reports.payroll') }}"
+               class="nav-link">
+
+                Payroll Report
+
+            </a>
+
+        </li>
+
+        <li class="nav-item">
+
+            <a href="{{ route('reports.leaves') }}"
+               class="nav-link">
+
+                Leave Report
+
+            </a>
+
+        </li>
+
+        <li class="nav-item">
+
+            <a href="{{ route('reports.eod') }}"
+               class="nav-link">
+
+                EOD Productivity
+
+            </a>
+
+        </li>
+
+        <li class="nav-item">
+
+            <a href="{{ route('reports.department') }}"
+               class="nav-link">
+
+                Department Report
+
+            </a>
+
+        </li>
+
+    </ul>
+
+</div>
+
+</li>
 
 @endif
     </ul>

@@ -15,7 +15,8 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\DailyEodController;
-
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ProfileController;
 Route::redirect('/', '/login');
 
 Route::middleware(['auth'])->group(function () {
@@ -169,7 +170,96 @@ Route::middleware(['auth'])->group(function () {
         [DailyEodController::class, 'review']
     
     )->name('daily-eod.review');
+
+    Route::get(
+
+        '/profile',
+    
+        [ProfileController::class, 'index']
+    
+    )->name('profile.index');
+    
+    Route::post(
+    
+        '/profile/update',
+    
+        [ProfileController::class, 'update']
+    
+    )->name('profile.update');
+    
+    Route::post(
+    
+        '/profile/change-password',
+    
+        [ProfileController::class, 'changePassword']
+    
+    )->name('profile.change-password');
 });
 
+Route::prefix('reports')
+    ->group(function(){
 
+        Route::get(
+
+            '/dashboard',
+
+            [ReportController::class, 'dashboard']
+
+        )->name('reports.dashboard');
+
+        Route::get(
+
+            '/attendance',
+
+            [ReportController::class, 'attendance']
+
+        )->name('reports.attendance');
+
+        Route::get(
+
+            '/payroll',
+
+            [ReportController::class, 'payroll']
+
+        )->name('reports.payroll');
+
+        Route::get(
+
+            '/leaves',
+
+            [ReportController::class, 'leaves']
+
+        )->name('reports.leaves');
+
+        Route::get(
+
+            '/eod',
+
+            [ReportController::class, 'eod']
+
+        )->name('reports.eod');
+
+        Route::get(
+
+            '/department',
+
+            [ReportController::class, 'department']
+
+        )->name('reports.department');
+        Route::post(
+
+            '/profile/upload-document',
+        
+            [ProfileController::class, 'uploadDocument']
+        
+        )->name('profile.upload-document');
+
+        Route::post(
+
+            '/profile/update',
+        
+            [ProfileController::class, 'updateimage']
+        
+        )->name('profile.updateprofile');
+    });
 require __DIR__.'/auth.php';

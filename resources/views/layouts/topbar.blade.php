@@ -26,13 +26,14 @@
                     <li>
 
                         <a class="dropdown-item"
-                           href="#">
+                           href="{{ route('profile.index') }}">
 
                             Profile
 
                         </a>
 
                     </li>
+                  
 
                     <li>
 

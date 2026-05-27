@@ -29,7 +29,8 @@ class User extends Authenticatable
         'joining_date',
         'employee_code',
         'probation_period',
-        'status'
+        'status',
+        'profile_image'
         
     ];
 
@@ -128,6 +129,15 @@ class User extends Authenticatable
             'reporting_user_id',
 
             'user_id'
+
+        );
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(
+
+            EmployeeDocument::class
 
         );
     }

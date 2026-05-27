@@ -90,7 +90,7 @@
                            class="form-control">
 
                 </div>
-
+<!-- 
                 <div class="col-md-6 mb-3">
 
                     <label class="form-label">
@@ -105,7 +105,7 @@
                            value="{{ old('project_cost', $project->project_cost ?? '') }}"
                            class="form-control">
 
-                </div>
+                </div> -->
 
                 <div class="col-md-6 mb-3">
 

@@ -17,17 +17,241 @@ class UserController extends Controller
     /**
      * Users list
      */
-    public function index()
+    public function index(Request $request)
     {
         $users = User::with([
+
                 'role',
+
                 'departments',
+
                 'reportingManagers'
+
             ])
+            /*
+            |--------------------------------------------------------------------------
+            | Name Filter
+            |--------------------------------------------------------------------------
+            */
+            ->when(
+
+                $request->name,
+            
+                function($q) use ($request){
+            
+                    $q->where(function($subQ) use ($request){
+            
+                        $subQ->where(
+            
+                            'name',
+            
+                            'like',
+            
+                            '%' . $request->name . '%'
+            
+                        )
+            
+                      
+                        ->orWhere(
+            
+                            'employee_code',
+            
+                            'like',
+            
+                            '%' . $request->name . '%'
+            
+                        );
+            
+                    });
+                }
+            
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Role Filter
+            |--------------------------------------------------------------------------
+            */
+
+            ->when(
+
+                $request->role_id,
+
+                function($q) use ($request){
+
+                    $q->where(
+
+                        'role_id',
+
+                        $request->role_id
+
+                    );
+                }
+
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Department Filter
+            |--------------------------------------------------------------------------
+            */
+
+            ->when(
+
+                $request->department_id,
+
+                function($q) use ($request){
+
+                    $q->whereHas(
+
+                        'departments',
+
+                        function($subQ) use ($request){
+
+                            $subQ->where(
+
+                                'departments.id',
+
+                                $request->department_id
+
+                            );
+                        }
+
+                    );
+                }
+
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reporting Manager Filter
+            |--------------------------------------------------------------------------
+            */
+
+            ->when(
+
+                $request->reporting_to,
+            
+                function($q) use ($request){
+            
+                    $q->whereIn(
+            
+                        'id',
+            
+                        \DB::table('user_reporting')
+            
+                            ->where(
+            
+                                'reporting_user_id',
+            
+                                $request->reporting_to
+            
+                            )
+            
+                            ->pluck('user_id')
+            
+                    );
+                }
+            
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Date Range Filter
+            |--------------------------------------------------------------------------
+            */
+
+            ->when(
+
+                $request->from_date,
+
+                function($q) use ($request){
+
+                    $q->whereDate(
+
+                        'joining_date',
+
+                        '>=',
+
+                        $request->from_date
+
+                    );
+                }
+
+            )
+
+            ->when(
+
+                $request->to_date,
+
+                function($q) use ($request){
+
+                    $q->whereDate(
+
+                        'joining_date',
+
+                        '<=',
+
+                        $request->to_date
+
+                    );
+                }
+
+            )
+
             ->latest()
-            ->get();
-//dd($users->toArray());
-        return view('users.index', compact('users'));
+
+            ->paginate(20)
+
+            ->withQueryString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filters Data
+        |--------------------------------------------------------------------------
+        */
+
+        $roles = Role::where(
+
+            'status',
+
+            'Active'
+
+        )->get();
+
+        $departments = Department::where(
+
+            'status',
+
+            'Active'
+
+        )->get();
+
+        $managers = User::where(
+
+            'status',
+
+            'Active'
+
+        )->get();
+
+        return view(
+
+            'users.index',
+
+            compact(
+
+                'users',
+
+                'roles',
+
+                'departments',
+
+                'managers'
+
+            )
+
+        );
     }
 
     /**

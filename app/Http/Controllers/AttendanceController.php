@@ -91,25 +91,44 @@ class AttendanceController extends Controller
     {
         $today = now()->toDateString();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Already Marked
+        |--------------------------------------------------------------------------
+        */
+
         $existing = Attendance::where(
-            'user_id',
-            auth()->id()
-        )->where(
-            'attendance_date',
-            $today
-        )->first();
+
+                'user_id',
+
+                auth()->id()
+
+            )
+
+            ->where(
+
+                'attendance_date',
+
+                $today
+
+            )
+
+            ->first();
 
         if($existing) {
 
             return back()->with(
+
                 'error',
+
                 'Attendance already marked'
+
             );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Save Selfie
+        | Save Selfie (Compressed)
         |--------------------------------------------------------------------------
         */
 
@@ -117,49 +136,187 @@ class AttendanceController extends Controller
 
         if($request->image) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Clean Base64
+            |--------------------------------------------------------------------------
+            */
+
             $image = $request->image;
 
-            $image = str_replace(
-                'data:image/png;base64,',
+            $image = preg_replace(
+
+                '/^data:image\/\w+;base64,/',
+
                 '',
+
                 $image
+
             );
 
             $image = str_replace(
+
                 ' ',
+
                 '+',
+
                 $image
+
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Decode Image
+            |--------------------------------------------------------------------------
+            */
 
             $imageData = base64_decode($image);
 
+            /*
+            |--------------------------------------------------------------------------
+            | Create Folder
+            |--------------------------------------------------------------------------
+            */
+
             $folderPath = public_path(
+
                 'uploads/attendance'
+
             );
 
             if(!file_exists($folderPath)) {
 
                 mkdir(
+
                     $folderPath,
+
                     0777,
+
                     true
+
                 );
             }
 
-            $imageName = 'attendance_in_' .
-                time() .
-                '.png';
+            /*
+            |--------------------------------------------------------------------------
+            | Image Name
+            |--------------------------------------------------------------------------
+            */
 
-            file_put_contents(
+            $imageName =
 
-                public_path(
-                    'uploads/attendance/' .
-                    $imageName
-                ),
+                'attendance_in_'
+
+                . time()
+
+                . '.jpg';
+
+            $fullPath =
+
+                $folderPath
+
+                . '/'
+
+                . $imageName;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create Image Resource
+            |--------------------------------------------------------------------------
+            */
+
+            $sourceImage = imagecreatefromstring(
 
                 $imageData
 
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Resize Large Images
+            |--------------------------------------------------------------------------
+            */
+
+            $width = imagesx($sourceImage);
+
+            $height = imagesy($sourceImage);
+
+            $maxWidth = 800;
+
+            if($width > $maxWidth) {
+
+                $newWidth = $maxWidth;
+
+                $newHeight = floor(
+
+                    $height *
+
+                    ($newWidth / $width)
+
+                );
+
+                $compressedImage = imagecreatetruecolor(
+
+                    $newWidth,
+
+                    $newHeight
+
+                );
+
+                imagecopyresampled(
+
+                    $compressedImage,
+
+                    $sourceImage,
+
+                    0,
+
+                    0,
+
+                    0,
+
+                    0,
+
+                    $newWidth,
+
+                    $newHeight,
+
+                    $width,
+
+                    $height
+
+                );
+
+            } else {
+
+                $compressedImage = $sourceImage;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Compressed JPEG
+            |--------------------------------------------------------------------------
+            */
+
+            imagejpeg(
+
+                $compressedImage,
+
+                $fullPath,
+
+                60
+
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Free Memory
+            |--------------------------------------------------------------------------
+            */
+
+            imagedestroy($sourceImage);
+
+            imagedestroy($compressedImage);
         }
 
         /*
@@ -187,8 +344,11 @@ class AttendanceController extends Controller
         ]);
 
         return back()->with(
+
             'success',
+
             'Punch in successful'
+
         );
     }
 
@@ -198,24 +358,60 @@ class AttendanceController extends Controller
     public function punchOut(Request $request)
     {
         $attendance = Attendance::where(
-            'user_id',
-            auth()->id()
-        )->where(
-            'attendance_date',
-            now()->toDateString()
-        )->first();
+
+                'user_id',
+
+                auth()->id()
+
+            )
+
+            ->where(
+
+                'attendance_date',
+
+                now()->toDateString()
+
+            )
+
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Punch In
+        |--------------------------------------------------------------------------
+        */
 
         if(!$attendance) {
 
             return back()->with(
+
                 'error',
+
                 'Punch in first'
+
             );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Save Selfie
+        | Already Punched Out
+        |--------------------------------------------------------------------------
+        */
+
+        if($attendance->punch_out) {
+
+            return back()->with(
+
+                'error',
+
+                'Punch out already marked'
+
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save Selfie (Compressed)
         |--------------------------------------------------------------------------
         */
 
@@ -223,49 +419,187 @@ class AttendanceController extends Controller
 
         if($request->image) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Clean Base64
+            |--------------------------------------------------------------------------
+            */
+
             $image = $request->image;
 
-            $image = str_replace(
-                'data:image/png;base64,',
+            $image = preg_replace(
+
+                '/^data:image\/\w+;base64,/',
+
                 '',
+
                 $image
+
             );
 
             $image = str_replace(
+
                 ' ',
+
                 '+',
+
                 $image
+
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Decode Image
+            |--------------------------------------------------------------------------
+            */
 
             $imageData = base64_decode($image);
 
+            /*
+            |--------------------------------------------------------------------------
+            | Create Folder
+            |--------------------------------------------------------------------------
+            */
+
             $folderPath = public_path(
+
                 'uploads/attendance'
+
             );
 
             if(!file_exists($folderPath)) {
 
                 mkdir(
+
                     $folderPath,
+
                     0777,
+
                     true
+
                 );
             }
 
-            $imageName = 'attendance_out_' .
-                time() .
-                '.png';
+            /*
+            |--------------------------------------------------------------------------
+            | Image Name
+            |--------------------------------------------------------------------------
+            */
 
-            file_put_contents(
+            $imageName =
 
-                public_path(
-                    'uploads/attendance/' .
-                    $imageName
-                ),
+                'attendance_out_'
+
+                . time()
+
+                . '.jpg';
+
+            $fullPath =
+
+                $folderPath
+
+                . '/'
+
+                . $imageName;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create Image Resource
+            |--------------------------------------------------------------------------
+            */
+
+            $sourceImage = imagecreatefromstring(
 
                 $imageData
 
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Resize Large Images
+            |--------------------------------------------------------------------------
+            */
+
+            $width = imagesx($sourceImage);
+
+            $height = imagesy($sourceImage);
+
+            $maxWidth = 800;
+
+            if($width > $maxWidth) {
+
+                $newWidth = $maxWidth;
+
+                $newHeight = floor(
+
+                    $height *
+
+                    ($newWidth / $width)
+
+                );
+
+                $compressedImage = imagecreatetruecolor(
+
+                    $newWidth,
+
+                    $newHeight
+
+                );
+
+                imagecopyresampled(
+
+                    $compressedImage,
+
+                    $sourceImage,
+
+                    0,
+
+                    0,
+
+                    0,
+
+                    0,
+
+                    $newWidth,
+
+                    $newHeight,
+
+                    $width,
+
+                    $height
+
+                );
+
+            } else {
+
+                $compressedImage = $sourceImage;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Compressed JPEG
+            |--------------------------------------------------------------------------
+            */
+
+            imagejpeg(
+
+                $compressedImage,
+
+                $fullPath,
+
+                60
+
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Free Memory
+            |--------------------------------------------------------------------------
+            */
+
+            imagedestroy($sourceImage);
+
+            imagedestroy($compressedImage);
         }
 
         /*
@@ -275,12 +609,15 @@ class AttendanceController extends Controller
         */
 
         $punchIn = Carbon::parse(
+
             $attendance->punch_in
+
         );
 
         $punchOut = now();
 
         $workingHours = $punchIn
+
             ->diffInMinutes($punchOut) / 60;
 
         /*
@@ -296,8 +633,11 @@ class AttendanceController extends Controller
             'punch_out_image' => $imageName,
 
             'working_hours' => round(
+
                 $workingHours,
+
                 2
+
             ),
 
             'punch_out_latitude' => $request->latitude,
@@ -307,8 +647,11 @@ class AttendanceController extends Controller
         ]);
 
         return back()->with(
+
             'success',
+
             'Punch out successful'
+
         );
     }
     /**

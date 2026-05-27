@@ -489,16 +489,29 @@
 
                             <td class="text-end pe-4">
 
-                                <div class="d-flex justify-content-end gap-2">
+                            <div class="d-flex justify-content-end gap-2">
 
-                                    <a href="{{ route('users.edit', $user->id) }}"
-                                       class="btn btn-warning btn-sm rounded-pill px-3">
+                                {{-- VIEW DOCUMENTS --}}
 
-                                        <i class="bi bi-pencil-square"></i>
+                                <a href="{{ route('users.documents', $user->id) }}"
+                                class="btn btn-info btn-sm rounded-pill px-3 text-white">
 
-                                        Edit
+                                    <i class="bi bi-folder2-open"></i>
 
-                                    </a>
+                                    Documents
+
+                                </a>
+
+                                {{-- EDIT USER --}}
+
+                                <a href="{{ route('users.edit', $user->id) }}"
+                                class="btn btn-warning btn-sm rounded-pill px-3">
+
+                                    <i class="bi bi-pencil-square"></i>
+
+                                    Edit
+
+                                </a>
 
                                 </div>
 

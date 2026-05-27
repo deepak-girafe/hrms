@@ -1037,4 +1037,19 @@ class UserController extends Controller
 
             );
     }
+    /**
+     * View User documents
+     */
+    public function documents(User $user)
+    {
+        $user->load('documents');
+
+        return view(
+
+            'users.documents',
+
+            compact('user')
+
+        );
+    }
 }

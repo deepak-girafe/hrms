@@ -261,5 +261,12 @@ Route::prefix('reports')
             [ProfileController::class, 'updateimage']
         
         )->name('profile.updateprofile');
+        Route::get(
+
+            '/users/{user}/documents',
+        
+            [UserController::class, 'documents']
+        
+        )->name('users.documents');
     });
 require __DIR__.'/auth.php';

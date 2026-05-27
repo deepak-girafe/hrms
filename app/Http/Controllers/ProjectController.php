@@ -13,11 +13,82 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::with('users')
-            ->latest()
-            ->get();
+        $user = auth()->user();
 
-        return view('projects.index', compact('projects'));
+        $roleName = strtolower(
+            optional($user->role)->name ?? ''
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN / HR
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+
+            in_array(
+
+                $roleName,
+
+                [
+
+                    'admin',
+
+                    'hr'
+
+                ]
+
+            )
+
+        ) {
+
+            $projects = Project::with('users')
+
+                ->latest()
+
+                ->get();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEPARTMENT HEAD / TEAM LEAD / EMPLOYEE
+        |--------------------------------------------------------------------------
+        */
+
+        else {
+
+            $projects = Project::with('users')
+
+                ->whereHas(
+
+                    'users',
+
+                    function($q) use ($user){
+
+                        $q->where(
+
+                            'users.id',
+
+                            $user->id
+
+                        );
+                    }
+
+                )
+
+                ->latest()
+
+                ->get();
+        }
+
+        return view(
+
+            'projects.index',
+
+            compact('projects')
+
+        );
     }
 
     /**

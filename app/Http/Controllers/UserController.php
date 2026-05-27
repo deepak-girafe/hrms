@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeUserMail;
-
+use App\Models\LeaveApplication;
 class UserController extends Controller
 {
     /**
@@ -66,7 +66,51 @@ class UserController extends Controller
                 }
             
             )
+            /** On Leave */
+            ->when(
 
+                $request->on_leave,
+            
+                function($q){
+            
+                    $q->whereIn(
+            
+                        'id',
+            
+                        LeaveApplication::where(
+            
+                                'status',
+            
+                                'Approved'
+            
+                            )
+            
+                            ->whereDate(
+            
+                                'from_date',
+            
+                                '<=',
+            
+                                today()
+            
+                            )
+            
+                            ->whereDate(
+            
+                                'to_date',
+            
+                                '>=',
+            
+                                today()
+            
+                            )
+            
+                            ->pluck('user_id')
+            
+                    );
+                }
+            
+            )    
             /*
             |--------------------------------------------------------------------------
             | Role Filter

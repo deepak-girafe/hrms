@@ -33,23 +33,53 @@
 
         {{-- Employees --}}
 
-        <div class="col-xl-3 col-md-6">
+        <style>
 
-            <div class="card border-0 shadow-sm rounded-4">
+.dashboard-card{
+    transition:0.3s;
+    cursor:pointer;
+}
 
-                <div class="card-body">
+.dashboard-card:hover{
+    transform:translateY(-5px);
+}
 
-                    <div class="d-flex justify-content-between">
+.icon-box{
+    width:65px;
+    height:65px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+}
+
+</style>
+
+<div class="row g-4 mb-4">
+
+    {{-- TOTAL EMPLOYEES --}}
+
+    <div class="col-xl-4 col-md-6">
+
+        <a href="{{ route('users.index') }}"
+           class="text-decoration-none">
+
+            <div class="card dashboard-card border-0 shadow-sm rounded-4 h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
 
                         <div>
 
-                            <h6 class="text-muted">
+                            <p class="text-muted mb-2">
 
-                                Employees
+                                Total Employees
 
-                            </h6>
+                            </p>
 
-                            <h2 class="fw-bold text-primary">
+                            <h2 class="fw-bold text-dark mb-0">
 
                                 {{ $employees }}
 
@@ -57,10 +87,9 @@
 
                         </div>
 
-                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                             style="width:60px;height:60px;">
+                        <div class="icon-box bg-primary-subtle text-primary">
 
-                            <i class="bi bi-people fs-3"></i>
+                            <i class="bi bi-people-fill"></i>
 
                         </div>
 
@@ -70,27 +99,32 @@
 
             </div>
 
-        </div>
+        </a>
 
-        {{-- Projects --}}
+    </div>
 
-        <div class="col-xl-3 col-md-6">
+    {{-- TOTAL PROJECTS --}}
 
-            <div class="card border-0 shadow-sm rounded-4">
+    <div class="col-xl-4 col-md-6">
 
-                <div class="card-body">
+        <a href="{{ route('projects.index') }}"
+           class="text-decoration-none">
 
-                    <div class="d-flex justify-content-between">
+            <div class="card dashboard-card border-0 shadow-sm rounded-4 h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
 
                         <div>
 
-                            <h6 class="text-muted">
+                            <p class="text-muted mb-2">
 
-                                Projects
+                                Total Projects
 
-                            </h6>
+                            </p>
 
-                            <h2 class="fw-bold text-success">
+                            <h2 class="fw-bold text-dark mb-0">
 
                                 {{ $projects }}
 
@@ -98,10 +132,9 @@
 
                         </div>
 
-                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
-                             style="width:60px;height:60px;">
+                        <div class="icon-box bg-success-subtle text-success">
 
-                            <i class="bi bi-kanban fs-3"></i>
+                            <i class="bi bi-kanban-fill"></i>
 
                         </div>
 
@@ -111,79 +144,42 @@
 
             </div>
 
-        </div>
+        </a>
 
-        {{-- Attendance --}}
+    </div>
 
-        <div class="col-xl-3 col-md-6">
+    {{-- ON LEAVE TODAY --}}
 
-            <div class="card border-0 shadow-sm rounded-4">
+    <div class="col-xl-4 col-md-6">
 
-                <div class="card-body">
+        <a href="{{ route('users.index', ['on_leave' => 1]) }}"
+           class="text-decoration-none">
 
-                    <div class="d-flex justify-content-between">
+            <div class="card dashboard-card border-0 shadow-sm rounded-4 h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
 
                         <div>
 
-                            <h6 class="text-muted">
+                            <p class="text-muted mb-2">
 
-                                Today's Attendance
+                                On Leave Today
 
-                            </h6>
+                            </p>
 
-                            <h2 class="fw-bold text-warning">
+                            <h2 class="fw-bold text-dark mb-0">
 
-                                {{ $todayAttendance }}
+                                {{ $onLeaveToday }}
 
                             </h2>
 
                         </div>
 
-                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
-                             style="width:60px;height:60px;">
+                        <div class="icon-box bg-danger-subtle text-danger">
 
-                            <i class="bi bi-calendar-check fs-3"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {{-- Leaves --}}
-
-        <div class="col-xl-3 col-md-6">
-
-            <div class="card border-0 shadow-sm rounded-4">
-
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between">
-
-                        <div>
-
-                            <h6 class="text-muted">
-
-                                Pending Leaves
-
-                            </h6>
-
-                            <h2 class="fw-bold text-danger">
-
-                                {{ $pendingLeaves }}
-
-                            </h2>
-
-                        </div>
-
-                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center"
-                             style="width:60px;height:60px;">
-
-                            <i class="bi bi-calendar-x fs-3"></i>
+                            <i class="bi bi-calendar-x-fill"></i>
 
                         </div>
 
@@ -193,12 +189,16 @@
 
             </div>
 
-        </div>
+        </a>
 
-        {{-- Attendance Widget --}}
+    </div>
 
-        @include('dashboard.partials.attendance-widget')
+    {{-- ATTENDANCE WIDGET --}}
 
+    @include('dashboard.partials.attendance-widget')
+
+
+       
     </div>
 
     {{-- Team Members --}}

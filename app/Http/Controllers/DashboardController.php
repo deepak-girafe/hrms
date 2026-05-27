@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Attendance;
-use App\Models\LeaveRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -16,17 +16,19 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Safe Role
+        | Role
         |--------------------------------------------------------------------------
         */
 
         $roleName = strtolower(
+
             optional($user->role)->name ?? ''
+
         );
 
         /*
         |--------------------------------------------------------------------------
-        | Default Collections
+        | Default
         |--------------------------------------------------------------------------
         */
 
@@ -39,91 +41,89 @@ class DashboardController extends Controller
         */
 
         if(
-            in_array($roleName, [
 
-                'admin',
-                'hr'
+            in_array(
 
-            ])
+                $roleName,
+
+                [
+
+                    'admin',
+
+                    'hr'
+
+                ]
+
+            )
+
         ) {
 
             $teamMembers = User::where(
-                'status',
-                'Active'
-            )->latest()->get();
+
+                    'status',
+
+                    'Active'
+
+                )
+
+                ->latest()
+
+                ->get();
         }
 
         /*
         |--------------------------------------------------------------------------
-        | DEPARTMENT HEAD
+        | DEPARTMENT HEAD / TEAM LEAD
         |--------------------------------------------------------------------------
         */
 
-        elseif($roleName == 'department head') {
+        elseif(
 
-            /*
-            |--------------------------------------------------------------------------
-            | Get Department IDs
-            |--------------------------------------------------------------------------
-            */
+            in_array(
 
-            $departmentIds = $user->departments
-                ->pluck('id');
+                $roleName,
 
-            /*
-            |--------------------------------------------------------------------------
-            | Team Members
-            |--------------------------------------------------------------------------
-            */
+                [
 
-            $teamMembers = User::whereHas(
+                    'department head',
 
-                'departments',
+                    'team lead'
 
-                function($q) use ($departmentIds) {
+                ]
 
-                    $q->whereIn(
+            )
 
-                        'departments.id',
+        ) {
 
-                        $departmentIds
+            $teamMembers = User::whereIn(
 
-                    );
-                }
+                    'id',
 
-            )->where(
+                    DB::table('user_reporting')
 
-                'status',
+                        ->where(
 
-                'Active'
+                            'reporting_user_id',
 
-            )->latest()->get();
-        }
+                            $user->id
 
-        /*
-        |--------------------------------------------------------------------------
-        | TEAM LEAD
-        |--------------------------------------------------------------------------
-        */
+                        )
 
-        elseif($roleName == 'team lead') {
+                        ->pluck('user_id')
 
-            /*
-            |--------------------------------------------------------------------------
-            | Reporting Employees
-            |--------------------------------------------------------------------------
-            */
+                )
 
-            if(method_exists($user, 'teamMembers')) {
+                ->where(
 
-                $teamMembers = $user->teamMembers()
-                    ->where(
-                        'status',
-                        'Active'
-                    )
-                    ->latest()
-                    ->get();
-            }
+                    'status',
+
+                    'Active'
+
+                )
+
+                ->latest()
+
+                ->get();
         }
 
         /*
@@ -154,7 +154,8 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $employees = $teamMembers->count();
+        $employees = $teamMembers
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
@@ -164,20 +165,71 @@ class DashboardController extends Controller
 
         $projects = Project::whereHas(
 
-            'users',
+                'users',
 
-            function($q) use ($employeeIds) {
+                function($q) use ($employeeIds){
 
-                $q->whereIn(
+                    $q->whereIn(
 
-                    'users.id',
+                        'users.id',
+
+                        $employeeIds
+
+                    );
+                }
+
+            )
+
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Employees On Leave Today
+        |--------------------------------------------------------------------------
+        */
+
+        $onLeaveToday = 0;
+
+        if(class_exists(\App\Models\LeaveApplication::class)) {
+
+            $onLeaveToday = \App\Models\LeaveApplication::whereIn(
+
+                    'user_id',
 
                     $employeeIds
 
-                );
-            }
+                )
 
-        )->count();
+                ->where(
+
+                    'status',
+
+                    'Approved'
+
+                )
+
+                ->whereDate(
+
+                    'from_date',
+
+                    '<=',
+
+                    today()
+
+                )
+
+                ->whereDate(
+
+                    'to_date',
+
+                    '>=',
+
+                    today()
+
+                )
+
+                ->count();
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -187,77 +239,73 @@ class DashboardController extends Controller
 
         $todayAttendance = Attendance::whereIn(
 
-            'user_id',
-
-            $employeeIds
-
-        )->whereDate(
-
-            'attendance_date',
-
-            today()
-
-        )->count();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pending Leaves
-        |--------------------------------------------------------------------------
-        */
-
-        $pendingLeaves = 0;
-
-        if(class_exists(\App\Models\LeaveRequest::class)) {
-
-            $pendingLeaves = LeaveRequest::whereIn(
-
                 'user_id',
 
                 $employeeIds
 
-            )->where(
+            )
 
-                'status',
+            ->whereDate(
 
-                'Pending'
+                'attendance_date',
 
-            )->count();
-        }
+                today()
+
+            )
+
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
-        | Attendance Widget
+        | Current User Attendance
         |--------------------------------------------------------------------------
         */
 
         $todayUserAttendance = Attendance::where(
 
-            'user_id',
+                'user_id',
 
-            $user->id
+                $user->id
 
-        )->whereDate(
+            )
 
-            'attendance_date',
+            ->whereDate(
 
-            today()
+                'attendance_date',
 
-        )->first();
+                today()
+
+            )
+
+            ->first();
 
         /*
         |--------------------------------------------------------------------------
-        | Weekly Off / Holiday
+        | Weekly Off
         |--------------------------------------------------------------------------
         */
 
         $dayName = now()->format('l');
 
-        $isWeeklyOff = in_array($dayName, [
+        $isWeeklyOff = in_array(
 
-            'Saturday',
-            'Sunday'
+            $dayName,
 
-        ]);
+            [
+
+                'Saturday',
+
+                'Sunday'
+
+            ]
+
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Holiday
+        |--------------------------------------------------------------------------
+        */
 
         $isHoliday = false;
 
@@ -265,17 +313,21 @@ class DashboardController extends Controller
 
             $isHoliday = \App\Models\Holiday::where(
 
-                'holiday_date',
+                    'holiday_date',
 
-                today()
+                    today()
 
-            )->where(
+                )
 
-                'status',
+                ->where(
 
-                'Active'
+                    'status',
 
-            )->exists();
+                    'Active'
+
+                )
+
+                ->exists();
         }
 
         /*
@@ -287,30 +339,36 @@ class DashboardController extends Controller
         $latestMembers = $teamMembers
             ->take(10);
 
-        return view('dashboard', compact(
+        return view(
 
-            'roleName',
+            'dashboard',
 
-            'employees',
+            compact(
 
-            'projects',
+                'roleName',
 
-            'todayAttendance',
+                'employees',
 
-            'pendingLeaves',
+                'projects',
 
-            'teamMembers',
+                'onLeaveToday',
 
-            'latestMembers',
+                'todayAttendance',
 
-            'todayUserAttendance',
+                'teamMembers',
 
-            'isWeeklyOff',
+                'latestMembers',
 
-            'isHoliday',
+                'todayUserAttendance',
 
-            'dayName'
+                'isWeeklyOff',
 
-        ));
+                'isHoliday',
+
+                'dayName'
+
+            )
+
+        );
     }
 }

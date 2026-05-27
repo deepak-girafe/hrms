@@ -49,7 +49,7 @@
 }
 
 .badge-soft{
-    background:#eef4ff;
+    
     color:#0d6efd;
     font-weight:600;
     padding:8px 12px;
@@ -220,6 +220,36 @@
                             </option>
 
                         @endforeach
+
+                    </select>
+
+                </div>
+
+                {{-- ON LEAVE TODAY --}}
+
+                <div class="col-xl-2 col-lg-6">
+
+                    <label class="form-label fw-semibold">
+
+                        Leave Status
+
+                    </label>
+
+                    <select name="on_leave"
+                            class="form-select select2 filter-control">
+
+                        <option value="">
+
+                            All Employees
+
+                        </option>
+
+                        <option value="1"
+                            {{ request('on_leave') == '1' ? 'selected' : '' }}>
+
+                            On Leave Today
+
+                        </option>
 
                     </select>
 

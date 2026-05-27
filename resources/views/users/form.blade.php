@@ -1126,7 +1126,7 @@ $(document).ready(function () {
         if(mobile.length < 10){
             $('#mobile_error').text('Mobile number must be 10 digits');
             $('#mobile_number').addClass('is-invalid');
-            $('button[type="submit"]').prop('disabled', true);
+           // $('button[type="submit"]').prop('disabled', true);
             $('#mobile_number').val('');  
                     $('#mobile_number').focus();
             return;

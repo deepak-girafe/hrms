@@ -310,7 +310,7 @@ $userMenus = $user->role
 
         @if(
                 in_array('attendance.index', $userMenus)
-                || strtolower(auth()->user()->role->name ?? '') != 'admin'
+                || strtolower(auth()->user()->role->name ?? '') == 'admin'
             )
 
             <li class="nav-item mb-2">
@@ -406,7 +406,7 @@ $userMenus = $user->role
 
                 <span>
 
-                    Daily EOD
+                    Timesheet
 
                 </span>
 
@@ -438,7 +438,7 @@ $userMenus = $user->role
 
     )
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
 
             <a href="{{ route('daily-eod.index') }}"
                class="nav-link">
@@ -453,7 +453,7 @@ $userMenus = $user->role
 
             </a>
 
-        </li>
+        </li> -->
 
     @endif
 

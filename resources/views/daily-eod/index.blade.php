@@ -232,7 +232,7 @@
 
                                     )
 
-                                        @if($eod->status != 'Reviewed')
+                                       <!--  @if($eod->status != 'Reviewed')
 
                                             <form method="POST"
                                                   action="{{ route('daily-eod.review', $eod->id) }}">
@@ -248,7 +248,7 @@
 
                                             </form>
 
-                                        @endif
+                                        @endif -->
 
                                     @endif
 

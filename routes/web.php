@@ -17,6 +17,48 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\DailyEodController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
+
+
+use Illuminate\Support\Facades\Mail;
+
+Route::get('/test-email', function () {
+
+    try {
+
+        Mail::raw(
+
+            'Laravel SMTP Test Email Working Successfully',
+
+            function ($message) {
+
+                $message->to('deepak.mahajan90@gmail.com')
+                        ->subject('SMTP Test');
+            }
+
+        );
+
+        return response()->json([
+
+            'status' => true,
+
+            'message' => 'Email Sent Successfully'
+
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+
+            'status' => false,
+
+            'message' => $e->getMessage()
+
+        ]);
+    }
+
+});
+
+
 Route::redirect('/', '/login');
 
 Route::middleware(['auth'])->group(function () {

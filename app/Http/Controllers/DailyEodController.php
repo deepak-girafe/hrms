@@ -13,30 +13,169 @@ class DailyEodController extends Controller
     /**
      * EOD Listing
      */
-    public function index()
-{
-    $eods = DailyEod::with([
+   public function index()
+    {
+        $user = auth()->user();
 
-            'user',
+        $roleName = strtolower(
 
-            'items',
+            optional($user->role)->name ?? ''
 
-            'items.project'
+        );
 
-        ])
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN / HR
+        |--------------------------------------------------------------------------
+        */
 
-        ->latest()
+        if(
 
-        ->paginate(10);
+            in_array(
 
-    return view(
+                $roleName,
 
-        'daily-eod.index',
+                [
 
-        compact('eods')
+                    'admin',
 
-    );
-}
+                    'hr'
+
+                ]
+
+            )
+
+        ) {
+
+            $eods = DailyEod::with([
+
+                    'user',
+
+                    'items',
+
+                    'items.project'
+
+                ])
+
+                ->latest()
+
+                ->paginate(10);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEPARTMENT HEAD / TEAM LEAD
+        |--------------------------------------------------------------------------
+        */
+
+        elseif(
+
+            in_array(
+
+                $roleName,
+
+                [
+
+                    'department head',
+
+                    'team lead'
+
+                ]
+
+            )
+
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reporting Employees + Self
+            |--------------------------------------------------------------------------
+            */
+
+            $reportingUserIds = \DB::table(
+
+                    'user_reporting'
+
+                )
+
+                ->where(
+
+                    'reporting_user_id',
+
+                    $user->id
+
+                )
+
+                ->pluck(
+
+                    'user_id'
+
+                )
+
+                ->push($user->id);
+
+            $eods = DailyEod::with([
+
+                    'user',
+
+                    'items',
+
+                    'items.project'
+
+                ])
+
+                ->whereIn(
+
+                    'user_id',
+
+                    $reportingUserIds
+
+                )
+
+                ->latest()
+
+                ->paginate(10);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | EMPLOYEE
+        |--------------------------------------------------------------------------
+        */
+
+        else {
+
+            $eods = DailyEod::with([
+
+                    'user',
+
+                    'items',
+
+                    'items.project'
+
+                ])
+
+                ->where(
+
+                    'user_id',
+
+                    $user->id
+
+                )
+
+                ->latest()
+
+                ->paginate(10);
+        }
+
+        return view(
+
+            'daily-eod.index',
+
+            compact('eods')
+
+        );
+    }
 
     /**
      * Create EOD

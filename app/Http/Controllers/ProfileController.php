@@ -10,17 +10,48 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Hash;
 use App\Models\EmployeeDocument;
+use App\Models\DocumentMaster;
 class ProfileController extends Controller
 {   
     public function index()
     {
-        $user = auth()->user()->load('documents');
+        $user = auth()->user()->load([
 
+            'documents',
+
+            'documents.documentMaster'
+
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Active Document Masters
+        |--------------------------------------------------------------------------
+        */
+
+        $documentMasters = DocumentMaster::where(
+
+                'status',
+
+                'Active'
+
+            )
+
+            ->orderBy('document_name')
+
+            ->get();
+            
         return view(
 
             'profile.profile',
 
-            compact('user')
+            compact(
+
+                'user',
+
+                'documentMasters'
+
+            )
 
         );
     }
@@ -240,61 +271,262 @@ class ProfileController extends Controller
      * Upload Documemts
      */
     public function uploadDocument(Request $request)
-    {
-        $request->validate([
+{
+    $request->validate([
 
-            'document_name' =>
+        'document_master_id' =>
 
-                'required',
+            'required|exists:document_masters,id',
 
-            'document_file' =>
+        'document_file' =>
 
-                'required|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120'
+            'required|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120'
 
-        ]);
+    ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Upload File
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | Create Folder
+    |--------------------------------------------------------------------------
+    */
 
-        $file = time() . '_' .
+    $folderPath = public_path(
 
-        $request->file('document_file')
-                ->getClientOriginalName();
+        'employee-documents'
 
-        $request->file('document_file')
-            ->move(
+    );
 
-                public_path('employee-documents'),
+    if(!file_exists($folderPath)) {
 
-                $file
+        mkdir(
 
-            );
+            $folderPath,
 
-        /*
-        |--------------------------------------------------------------------------
-        | Save Document
-        |--------------------------------------------------------------------------
-        */
+            0777,
 
-        EmployeeDocument::create([
-
-            'user_id' => auth()->id(),
-
-            'document_name' => $request->document_name,
-
-            'document_file' => $file
-
-        ]);
-
-        return back()->with(
-
-            'success',
-
-            'Document uploaded successfully'
+            true
 
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | File Upload
+    |--------------------------------------------------------------------------
+    */
+
+    $uploadedFile = $request->file('document_file');
+
+    $extension = strtolower(
+
+        $uploadedFile->getClientOriginalExtension()
+
+    );
+
+    $fileName =
+
+        time()
+
+        . '_'
+
+        . rand(1000,9999)
+
+        . '.'
+
+        . $extension;
+
+    $fullPath =
+
+        $folderPath
+
+        . '/'
+
+        . $fileName;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compress Image Files
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+
+        in_array(
+
+            $extension,
+
+            [
+
+                'jpg',
+
+                'jpeg',
+
+                'png'
+
+            ]
+
+        )
+
+    ) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Image Resource
+        |--------------------------------------------------------------------------
+        */
+
+        if($extension == 'png') {
+
+            $sourceImage = imagecreatefrompng(
+
+                $uploadedFile
+
+            );
+
+        } else {
+
+            $sourceImage = imagecreatefromjpeg(
+
+                $uploadedFile
+
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Image Dimensions
+        |--------------------------------------------------------------------------
+        */
+
+        $width = imagesx($sourceImage);
+
+        $height = imagesy($sourceImage);
+
+        $maxWidth = 1200;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resize Large Images
+        |--------------------------------------------------------------------------
+        */
+
+        if($width > $maxWidth) {
+
+            $newWidth = $maxWidth;
+
+            $newHeight = floor(
+
+                $height *
+
+                ($newWidth / $width)
+
+            );
+
+            $compressedImage = imagecreatetruecolor(
+
+                $newWidth,
+
+                $newHeight
+
+            );
+
+            imagecopyresampled(
+
+                $compressedImage,
+
+                $sourceImage,
+
+                0,
+
+                0,
+
+                0,
+
+                0,
+
+                $newWidth,
+
+                $newHeight,
+
+                $width,
+
+                $height
+
+            );
+
+        } else {
+
+            $compressedImage = $sourceImage;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save Compressed JPEG
+        |--------------------------------------------------------------------------
+        */
+
+        imagejpeg(
+
+            $compressedImage,
+
+            $fullPath,
+
+            60
+
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Free Memory
+        |--------------------------------------------------------------------------
+        */
+
+        imagedestroy($sourceImage);
+
+        imagedestroy($compressedImage);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Other Files
+    |--------------------------------------------------------------------------
+    */
+
+    else {
+
+        $uploadedFile->move(
+
+            $folderPath,
+
+            $fileName
+
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save Document
+    |--------------------------------------------------------------------------
+    */
+
+    EmployeeDocument::create([
+
+        'user_id' => auth()->id(),
+
+        'document_master_id' =>
+
+            $request->document_master_id,
+
+        'document_file' => $fileName
+
+    ]);
+
+    return back()->with(
+
+        'success',
+
+        'Document uploaded successfully'
+
+    );
+}
 }

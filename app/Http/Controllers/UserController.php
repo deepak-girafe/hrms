@@ -1065,17 +1065,23 @@ class UserController extends Controller
      * View User documents
      */
     public function documents(User $user)
-    {
-        $user->load('documents');
+{
+    $user->load([
 
-        return view(
+        'documents',
 
-            'users.documents',
+        'documents.documentMaster'
 
-            compact('user')
+    ]);
 
-        );
-    }
+    return view(
+
+        'users.documents',
+
+        compact('user')
+
+    );
+}
     public function checkEmployeeCode(Request $request)
     {
         $query = User::where('employee_code', $request->employee_code);

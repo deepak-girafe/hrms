@@ -17,7 +17,7 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\DailyEodController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\DocumentMasterController;
 
 
 
@@ -278,6 +278,14 @@ Route::prefix('reports')
         ->name('check.email');
         Route::post('/check-mobile', [UserController::class, 'checkMobile'])
         ->name('check.mobile');
+
+        Route::resource(
+
+            'document-masters',
+        
+            DocumentMasterController::class
+        
+        );
         
     });
 require __DIR__.'/auth.php';

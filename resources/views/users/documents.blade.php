@@ -33,6 +33,8 @@
                 <a href="{{ route('users.index') }}"
                    class="btn btn-light border rounded-pill px-4">
 
+                    <i class="bi bi-arrow-left me-2"></i>
+
                     Back
 
                 </a>
@@ -53,6 +55,12 @@
 
                         <tr>
 
+                            <th width="60">
+
+                                #
+
+                            </th>
+
                             <th>
 
                                 Document Name
@@ -65,7 +73,7 @@
 
                             </th>
 
-                            <th width="120">
+                            <th width="140">
 
                                 Action
 
@@ -77,13 +85,23 @@
 
                     <tbody>
 
-                        @forelse($user->documents as $document)
+                        @forelse($user->documents as $key => $document)
 
                             <tr>
 
                                 <td>
 
-                                    {{ $document->document_name }}
+                                    {{ $key + 1 }}
+
+                                </td>
+
+                                <td>
+
+                                    <div class="fw-semibold">
+
+                                        {{ $document->documentMaster->document_name ?? '-' }}
+
+                                    </div>
 
                                 </td>
 
@@ -99,6 +117,8 @@
                                        target="_blank"
                                        class="btn btn-primary btn-sm rounded-pill px-3">
 
+                                        <i class="bi bi-eye me-1"></i>
+
                                         View
 
                                     </a>
@@ -111,7 +131,7 @@
 
                             <tr>
 
-                                <td colspan="3"
+                                <td colspan="4"
                                     class="text-center py-5 text-muted">
 
                                     No documents uploaded

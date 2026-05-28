@@ -264,11 +264,19 @@
 
                             <div class="col-md-5">
 
-                                <input type="text"
-                                       name="document_name"
-                                       placeholder="Document Name"
-                                       class="form-control rounded-3"
-                                       required>
+                            <select name="document_master_id" class="form-control rounded-3">
+
+                                @foreach($documentMasters as $masterDocument)
+
+                                    <option value="{{ $masterDocument->id }}">
+
+                                        {{ $masterDocument->document_name }}
+
+                                    </option>
+
+                                @endforeach
+
+                                </select>
 
                             </div>
 
@@ -327,7 +335,7 @@
 
                                         <td>
 
-                                            {{ $document->document_name }}
+                                            {{ $document->documentMaster->document_name ?? '-' }}
 
                                         </td>
 
@@ -340,8 +348,8 @@
                                         <td>
 
                                             <a href="{{ asset('employee-documents/'.$document->document_file) }}"
-                                               target="_blank"
-                                               class="btn btn-primary btn-sm rounded-pill">
+                                            target="_blank"
+                                            class="btn btn-primary btn-sm rounded-pill">
 
                                                 View
 

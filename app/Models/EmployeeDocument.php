@@ -10,7 +10,7 @@ class EmployeeDocument extends Model
 
         'user_id',
 
-        'document_name',
+        'document_master_id',
 
         'document_file'
 
@@ -19,5 +19,14 @@ class EmployeeDocument extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function documentMaster()
+    {
+        return $this->belongsTo(
+
+            DocumentMaster::class
+
+        );
     }
 }

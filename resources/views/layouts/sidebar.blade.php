@@ -161,7 +161,42 @@ $userMenus = $user->role
                             </li>
 
                         @endif
+                        @if(
 
+                            in_array(
+
+                                strtolower(auth()->user()->role->name),
+
+                                [
+
+                                    'admin',
+
+                                    'hr'
+
+                                ]
+
+                            )
+
+                            )
+
+                            <li class="nav-item">
+
+                            <a href="{{ route('document-masters.index') }}"
+                            class="nav-link">
+
+                                <i class="bi bi-folder2-open"></i>
+
+                                <span>
+
+                                    Documents
+
+                                </span>
+
+                            </a>
+
+                            </li>
+
+                            @endif
                         @if(in_array('role-permissions.index', $userMenus))
 
                             <li class="nav-item mb-1">
